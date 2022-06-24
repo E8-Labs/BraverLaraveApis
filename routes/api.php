@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\UserAuthController;
 use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Listings\ListingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,10 @@ Route::post("updateuser",[UserAuthController::class,'updateUser']);
 Route::post("approveuser",[UserController::class,'approveUser']);
 
 Route::post("addcard",[PaymentController::class,'addCard']);
+Route::post("cardlist",[PaymentController::class,'cardList']);
+
+Route::post("addyacht",[ListingController::class,'addListing']);
+Route::get("listyachts",[ListingController::class,'getListings']);
 
 
 

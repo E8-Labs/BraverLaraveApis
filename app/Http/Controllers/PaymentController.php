@@ -152,4 +152,100 @@ class PaymentController extends Controller
 			    
 	}
 
+
+	function cardList(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			$userid = $request->userid;
+			$user = User::where('userid', $userid)->orWhere('id', $userid)->first();
+			if($user == NULL){
+				return response()->json(['status' => "0",
+					'message'=> 'No such user',
+					'data' => null, 
+				]);
+			}
+			if($user->stripecustomerid == '' || $user->stripecustomerid == NULL){
+				return response()->json(['status' => "0",
+					'message'=> 'No cards for this user',
+					'data' => null, 
+				]);
+
+			}
+			$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+
+
+			$page = 1;
+			if($request->has('page')){
+				$page = $request->page;
+			}
+			$limit = $page * 50;
+
+			$data = $stripe->customers->allSources(
+            $user->stripecustomerid,
+            ['object' => 'card', 'limit' => $limit]
+            );
+
+			// return $data;
+			$cards = $data->data;
+			$rows = array();
+			for($i = 0; $i < count($cards); $i++){
+    		   $c = $cards[$i];
+    		   $stid = $c["id"];
+    		   $brand = $c["brand"];
+    		   $last = $c["last4"];
+    		   $name = $c["name"];
+    		   $exm = $c["exp_month"];
+    		   $exy = $c["exp_year"];
+    		   $expiry = "$exm/$exy";
+    		   
+    		   $row = array();
+    		   $row["stripecardid"] = $stid;
+    		   $row["expirydate"] = $expiry;
+    		   $row["cardbrand"] = $brand;
+    		   $row["cardholdername"] = $name;
+    		   $row["cardnumber"] = "**** **** **** $last";
+    		   $row["userid"] = $userid;
+    		   $row["cvc"] = "";
+    		   $dbCard = Card::where('stripecardid', $stid)->first();
+    		   $row["dateadded"] = "";
+    		   $row["environment"] = "";
+    		   if($dbCard){
+    		   	$row["cardid"] = $dbCard->cardid;
+    		   	$rows[] = $row;
+    		   }
+    		   else{
+    		   		// $stripe->customers->deleteSource(
+        			//     $user->stripecustomerid,
+        			//     $stid,
+        			//     []
+        			// );
+    		   }
+    		   
+    		   
+    		   
+    		}  
+    		return response()->json(['status' => "1",
+						'message'=> 'Card list ',
+						'data' => $rows, 
+					]);
+
+	}
+
 }

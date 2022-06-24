@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Listing;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Listing extends Model
+class ListingImage extends Model
 {
     use HasFactory;
-    protected $table = 'yacht';
+    protected $table = 'productmedia';
     public $timestamps = false;
 }
