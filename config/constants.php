@@ -27,7 +27,7 @@
     'profile_images_save' => 'public/profile_images/',
 
 
-    'item_images_old' => 'http://braverhospitalityapp.com/phg',
+    'item_images_old' => 'http://braverhospitalityapp.com/phg/',
     'item_images' => 'http://braverhospitality.com/public_html/public/storage/item_images/',
     'item_images_save' => 'public/item_images/',
 

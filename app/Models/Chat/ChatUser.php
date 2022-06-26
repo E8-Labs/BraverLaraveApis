@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\Auth;
+namespace App\Models\Chat;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class User extends Model
+class ChatUser extends Model
 {
     use HasFactory;
-    protected $table = 'user';
+    protected $table = "chatusers";
     public $timestamps = false;
 }

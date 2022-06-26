@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Auth\User;
 use App\Models\Listing;
 use App\Models\Listing\ListingImage;
+use App\Models\Listing\ReportedListing;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Hash;
@@ -294,6 +295,127 @@ class ListingController extends Controller
 					'data' => null, 
 				]);
 			}
+    }
+
+
+    function getListingById(Request $request){
+
+    	$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$id = $request->yachtid;
+			$listing = Listing::where('yachtid', $id)->first();
+			if($listing){
+				return response()->json(['status' => "1",
+					'message'=> 'Listing details',
+					'data' => new ListingResource($listing), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'No such listing',
+					'data' => null, 
+				]);
+			}
+
+    }
+
+    function reportListing(Request $request){
+
+    	$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$id = $request->yachtid;
+			$lis = new ReportedListing();
+			$lis->reportedproduct = $id;
+			$lis->reportedby = $request->fromid;
+			$list->reason = $request->reason;
+			$done = $lis->save();
+			if($done){
+				$listing = Listing::where('yachtid', $id)->first();
+				return response()->json(['status' => "1",
+					'message'=> 'Listing reported',
+					'data' => new ListingResource($listing), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Some issue on server',
+					'data' => null, 
+				]);
+			}
+
+    }
+
+
+    function featuretListing(Request $request){
+
+    	$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$done = Listing::where('yachtid', $id)->update(['featured' => 1]);
+			if($done){
+				$listing = Listing::where('yachtid', $id)->first();
+				return response()->json(['status' => "1",
+					'message'=> 'Listing featured',
+					'data' => new ListingResource($listing), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Some problem on server',
+					'data' => null, 
+				]);
+			}
+
     }
 
 		

@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\User;
+use App\Models\Listing\Reservation;
 use App\Models\Card;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
@@ -245,6 +248,44 @@ class PaymentController extends Controller
 						'message'=> 'Card list ',
 						'data' => $rows, 
 					]);
+
+	}
+
+
+	function makeReservation(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+			"reservationdate" => 'required',
+			"reservationtime" => 'required',
+			"yachtid" => 'required',
+			"amount" => 'required',
+			"chatid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$res = new Reservation();
+			$res->reservationid = uniqid();
+			$res->reservedfor = $request->userid;
+			$res->dateadded = Carbon::now()->toDateTimeString();
+			$yachtid = $request->yachtid;
+			$date = $request->reservationdate;
+			$time = $request->reservationtime;
 
 	}
 

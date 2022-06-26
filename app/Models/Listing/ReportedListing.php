@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\Auth;
+namespace App\Models\Listing;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class User extends Model
+class ReportedListing extends Model
 {
     use HasFactory;
-    protected $table = 'user';
+    protected $table = "report";
     public $timestamps = false;
 }
