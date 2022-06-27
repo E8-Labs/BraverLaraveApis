@@ -43,6 +43,16 @@ Route::post("featurelisting",[ListingController::class,'featuretListing']);
 
 //Chat
 Route::post("createchat",[ChatController::class,'createChat']);
+Route::get("getchatbyid",[ChatController::class,'getChatById']);
+Route::get("chatlistteam",[ChatController::class,'getTeamChat']);
+Route::get("chatlistadmin",[ChatController::class,'getTeamChat']);
+Route::get("chatlistuser",[ChatController::class,'getUserChat']);
+Route::get("loaduserrequests",[ChatController::class,'getUserRequests']);
+Route::get("deletechat",[ChatController::class,'deleteChat']);
+Route::get("unreadnotificationsadmin",[ChatController::class,'getUnreadNotifications']);
+
+Route::post("reserveyacht",[PaymentController::class,'makeReservation']);
+Route::post("create_crypto_charge",[PaymentController::class,'createCryptoChargeLinkOnServer']);
 
 
 
@@ -56,3 +66,21 @@ Route::post("teammembers",[UserController::class,'adminTeamMembers']);
 Route::get("getuserbyid",[UserController::class,'getUser']);
 Route::get("getuserbyinvitecode",[UserController::class,'getUserByInviteCode']);
 Route::get("loadmenu",[MenuController::class,'loadMenu']);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -5,18 +5,24 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\User;
+use App\Models\Chat\Invoice;
+use App\Models\Chat\ChatThread;
+use App\Models\Chat\ChatUser;
 use App\Models\Listing\Reservation;
+use App\Models\Listing\ReservationStatus;
 use App\Models\Card;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
     //
+    private $coinbase_api_key = "ecbb36a1-1305-4cfb-917a-2a34561df982";
 
     function addCard(Request $request){
     	$validator = Validator::make($request->all(), [
@@ -279,14 +285,346 @@ class PaymentController extends Controller
 				]);
 			}
 
-			$res = new Reservation();
-			$res->reservationid = uniqid();
+			$res = Reservation::where('chatid', $request->chatid)->first();
+			if($res == NULL){
+				return response()->json(['status' => "0",
+					'message'=> 'No reservation found',
+					'data' => null, 
+				]);
+			}
+
+			DB::beginTransaction();
+			// $res->reservationid = uniqid();
+			$res->chatid = $request->chatid;
 			$res->reservedfor = $request->userid;
 			$res->dateadded = Carbon::now()->toDateTimeString();
 			$yachtid = $request->yachtid;
 			$date = $request->reservationdate;
 			$time = $request->reservationtime;
+			if($request->has('invoicedescription')){
+				$res->invoicedescription = $request->invoicedescription;
+			}
+			else{
+				$res->invoicedescription = '';
+			}
 
+			if($request->has('reservationdescription')){
+				$res->reservationdescription = $request->reservationdescription;
+			}
+			else{
+				$res->reservationdescription = '';
+			}
+
+			if($request->has('amount')){
+				$res->amountpaid = $request->amount * 100;
+			}
+			else{
+				
+			}
+
+
+			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			if($user->stripecustomerid == NULL || $user->stripecustomerid == ''){
+				return response()->json(['status' => "0",
+					'message'=> "User haven't added any Payment method",
+					'data' => null, 
+				]);
+			}
+
+			//Charge user
+			$source = '';
+			if($request->has('paymentmethod')){
+				$source = $request->paymentmethod;
+			}
+			$cost = $res->amountpaid * 100;
+			// return $cost;
+			$charge = $this->chargeUser($cost, $user->stripecustomerid, $res->reservationdescription, $source);
+			if($charge->id == NULL){
+				DB::rollBack();
+				return response()->json(['status' => "0",
+					'message'=> "Error processing payment",
+					'data' => null, 
+				]);
+			}
+			else{
+				$trid = $charge["id"];
+				$res->reservationstatus = ReservationStatus::StatusReserved;
+				$res->transactionid = $trid;
+				$res->save();
+				DB::commit();
+				$chat = ChatThread::where('chatid', $request->chatid)->first();
+				$this->sendNotToAllUsers($user, $chat);
+				return response()->json(['status' => "1",
+					'message'=> "Payment processed & reservation made",
+					'data' => null, 
+				]);
+			}
+
+			
+
+	}
+
+
+	private function chargeUser($amount, $customerstripeid, $description, $source){
+		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+        $array = array();
+        if($source === ''){
+            $array = [
+          'amount' => $amount,
+          'currency' => 'usd',
+          'customer' => $customerstripeid,
+          'description' => $description,
+        ];
+        }
+        else{
+            $array = [
+          'amount' => $amount,
+          'currency' => 'usd',
+          'customer' => $customerstripeid,
+          'source' => $source,
+          'description' => $description,
+        ];
+        }
+        
+        
+        $charge = $stripe->charges->create($array);
+
+        return $charge;
+	}
+
+	public function createCryptoChargeLinkOnServer(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"invoice_id" => 'required',
+			"reservation_id" => 'required',
+			"userid" => 'required',
+			"amount" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$description = '';
+			if($request->has('description')){
+				$description = $request->description;
+			}
+			$name = 'Crypto';
+			if($request->has('name')){
+				$name = $request->name;
+			}
+
+
+
+			$invoice = Invoice::where('invoice_id', $request->invoice_id)->first();
+			 $message = "";
+			 $charge = array();
+			if($invoice){
+        		$chargeid = $invoice->crypto_charge_code;
+        		$charge = $this->getCryptoCharge($chargeid);
+        		$charge = $this->getRequiredDataFromCharge($charge);
+        		$timeline_status = $charge["timeline_status"];
+        		$payment_status = $charge["payments_status"];
+        		if($timeline_status == "EXPIRED" || $payment_status == "CANCELLED"){
+        		    $charge = null;
+        		    $message = "Charge expired or cancelled. Generating new";
+        		}
+			}
+			else{
+				$invoice = new Invoice();
+				$invoice->invoice_id = $request->invoice_id;
+			}
+
+			if($charge == null){
+        		$charge = $this->createCryptoCharge($request->amount, $description, $name);
+    		}
+    		else{
+    		    $message = "Charge already exists and not expired and not cancelled";
+    		}
+    		// echo "this is charge";
+    		$code = $charge["code"];
+    		$url = $charge["payment_url"];
+    		$charge_id = $charge["charge_id"];
+    		$price = $charge["price"];
+    		$payment_status = $charge["payments_status"];
+    		$timeline_status = $charge["timeline_status"];
+
+    		$invoice->crypto_charge_code = $code;
+    		$invoice->invoice_by = $request->userid;
+    		$invoice->reservation_id = $request->reservation_id;
+    		$invoice->crypto_charge_id = $charge_id;
+    		$invoice->crypto_charge_url = $url;
+    		$invoice->payment_status = $payment_status;
+    		$invoice->timeline_status = $timeline_status;
+    		$saved = $invoice->save();
+    		if($saved){
+    			return response()->json(['status' => "1",
+					'message'=> 'Crypto Charge Created',
+					'data' => $charge, 
+				]);
+    		}
+    		else{
+    			return response()->json(['status' => "0",
+					'message'=> 'Error creating charge',
+					'data' => null, 
+				]);
+    		}
+	}
+
+
+
+
+	public function getCryptoCharge($chargeid){
+        $url = "https://api.commerce.coinbase.com/charges/".$chargeid;
+        
+        
+        $headers = ['X-CC-Api-Key: '.$this->coinbase_api_key, 'X-CC-Version: 2018-03-22'];
+        
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL,$url);
+        // curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        // $payload = json_encode($chargeData);
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        // curl_setopt($ch, CURLOPT_POSTFIELDS,
+                    // $payload);
+              
+        $response = curl_exec($ch);
+        
+        curl_close ($ch);
+        return json_decode($response);
+    }
+
+
+
+    public function getRequiredDataFromCharge($charge){
+        $data = $charge->data;
+        // return $data;
+        $code = $data->code;
+        $payment_url = $data->hosted_url;
+        $chargeid = $data->id;
+        
+        $price = $data->pricing;
+        $local_price = $price->local;
+        $amount = $local_price->amount;
+        
+        $payments = $data->payments;
+        
+        $timelines = $data->timeline;
+        $timeline_status = "";
+        if(count($timelines) == 0){
+            $timeline_status = "NEW"; //PENDING
+        }
+        else{
+            foreach($timelines as $time){
+                
+                if($timeline_status == "CANCELED" && $timeline_status == "EXPIRED"){
+                    //don't assign values here
+                    // $timeline_status = $time->status;
+                }
+                else {
+                    $timeline_status = $time->status;
+                }
+            }
+        }
+        
+        
+        $payment_status = "";
+        if(count($payments) == 0){
+            $payment_status = "NEW"; //PENDING
+        }
+        else{
+            foreach($payments as $time){
+                
+                if($payment_status == "CANCELED" || $payment_status == "EXPIRED"){
+                    //delete that charge from db
+                }
+                else if($payment_status == "CONFIRMED"){
+                    //payment made, update firebase node
+                    
+                }
+                else{
+                    $payment_status = $time->status;
+                }
+            }
+        }
+        return ["code" => $code, "payment_url" => $payment_url, "charge_id" => $chargeid, "payments" => $payments, "price" => "$".$amount, "payments_status" => $payment_status, "timeline" => $timelines, "timeline_status" => $timeline_status];//$charge;
+    }
+
+    public function createCryptoCharge($amount, $description, $name){
+        
+        $chargeData = [
+                'name' => $name,
+                'description' => $description,
+                'local_price' => [
+                    'amount' => $amount,
+                    'currency' => 'USD'
+                    ],
+                'pricing_type' => 'fixed_price'
+        ];
+        
+        $headers = ['X-CC-Api-Key: '. $this->coinbase_api_key, 'X-CC-Version: 2018-03-22', 'Content-Type: application/json'];
+        
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL,"https://api.commerce.coinbase.com/charges/");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $payload = json_encode($chargeData);
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt($ch, CURLOPT_POSTFIELDS,
+                    $payload);
+              
+        $response = curl_exec($ch);
+        
+        curl_close ($ch);
+        $charge = json_decode($response);
+        $data = $this->getRequiredDataFromCharge($charge);
+        return $data;
+    }
+
+
+	function sendNotToAllUsers($user, $chat){
+    		$fromuser = $user;
+            $fromname = $fromuser->name;
+            
+            $cusers = ChatUser::where('chatid', $chat->chatid)->get();
+            // echo json_encode(["message" => 'Chat Push sent', 'users' => $updateunread, 'status'=>'1', "chat" => $chat], JSON_PRETTY_PRINT);
+            // die();
+            
+            for($i = 0; $i < count($cusers); $i ++){
+                // $ud = $cusers[$i];
+                
+                $user = $cusers[$i];
+                if($user["userid"] === $user->userid){
+                    
+                }
+                else{
+                     $token = $user["fcmtoken"];
+                $data = array();
+                $data["title"] = $fromname;
+                $data["body"] = "paid invoice";
+                $data["sound"] = "default";
+                $data["chatid"] = $chatid;
+                
+                $pushsent = $this->Push_Notification($token, $data);
+                }
+               
+            //   $push[$i] = $pushsent;
+            }
 	}
 
 }

@@ -9,5 +9,6 @@ class Reservation extends Model
 {
     use HasFactory;
     protected $table = 'yachtreservations';
+    protected $primaryKey = 'reservationid';
     public $timestamps = false;
 }

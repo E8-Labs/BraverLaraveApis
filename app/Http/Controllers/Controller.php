@@ -13,8 +13,46 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
     public $APIKEY = "kinsal0349";
+    private $API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
 
 
+    public function Push_Notification($token,$data) {
+        try{
+
+
+            $fcmUrl = 'https://fcm.googleapis.com/fcm/send';
+            
+            $extraNotificationData = ["message" => $data];
+    
+            $fcmNotification = [
+                //'registration_ids' => $tokenList, //multple token array
+                'to'        => $token, //single token
+                'notification' => $data,
+                'data' => $extraNotificationData
+            ];
+            //var_dump($fcmNotification); exit;
+    
+            $headers = [
+                'Authorization: key='. $this->API_KEY_FCM,
+                'Content-Type: application/json'
+            ];
+    
+    
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL,$fcmUrl);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmNotification));
+            $result = curl_exec($ch);
+            curl_close($ch);
+            return true;
+
+        }catch(\Illuminate\Database\QueryException $ex){
+            return false;
+        }
+    }
 
 
     // public function uploads($file, $path)

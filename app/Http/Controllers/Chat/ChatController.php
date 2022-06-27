@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Chat;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Auth\User;
+use App\Models\Menu;
 use App\Models\Chat\ChatUser;
 use App\Models\Chat\ChatThread;
 use App\Models\Listing\Reservation;
@@ -198,6 +199,277 @@ class ChatController extends Controller
 				DB::rollBack();
 				return response()->json(['status' => "0",
 					'message'=> 'Error creating chat',
+					'data' => null, 
+				]);
+			}
+	}
+
+	public function getChatById(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"chatid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$chat = ChatThread::where('chatid', $request->chatid)->first();
+			if($chat){
+				return response()->json(['status' => "1",
+					'message'=> 'Chat obtained',
+					'data' => new ChatResource($chat), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Chat does not exist',
+					'data' => null, 
+				]);
+			}
+
+	}
+
+	function getUserChat(Request $request){
+		$ListSize = 20;
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			$page = 1;
+			if($request->has('page')){
+				$page = $request->page;
+			}
+
+			$off_set = $page * $ListSize - $ListSize;
+
+			$chatids = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
+			$chats = ChatThread::whereIn("chatid", $chatids)->skip($off_set)->take($ListSize)->get();
+			if($chats){
+				return response()->json(['status' => "1",
+					'message'=> 'Chats obtained',
+					'data' => ChatResource::collection($chats), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Chat does not exist',
+					'data' => null, 
+				]);
+			}
+	}
+
+
+	public function getTeamChat(Request $request){
+
+		$ListSize = 20;
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			$page = 1;
+			if($request->has('page')){
+				$page = $request->page;
+			}
+
+			$off_set = $page * $ListSize - $ListSize;
+
+			$chats = ChatThread::when($request->has('chatforproduct'), function($query, $request){
+				$query->where('chatforproduct', $request->chatforproduct);
+			})
+			->when($request->has('chattype'), function($query, $request){
+				$query->where('chattype', $request->chattype);
+			})
+			->when($request->has('userid'), function($query, $request){
+				$chatids = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
+				$query->whereIn('chatid', $chatids);
+			})
+			->when($request->has('status'), function($query, $request){
+				$status = $request->status;
+				if($status == "Paid"){
+					//chatid in (Select chatid from yachtreservations where reservationstatus = 'Reserved' OR reservationstatus = 'Cancelled')
+					$chatids = Reservation::where('reservationstatus', ReservationStatus::StatusReserved)
+					->orWhere('reservationstatus', ReservationStatus::StatusCancelled)->pluck('chatid')->toArray();
+					$query->whereIn('chatid', $chatids);
+				}
+				else{
+					$chatids = Reservation::where('reservationstatus', ReservationStatus::StatusPendingPayment)->pluck('chatid')->toArray();
+					$query->whereIn('chatid', $chatids);
+				}
+				
+			})
+			->orderBy('updatedat', 'DESC')
+			->skip($off_set)->take($ListSize)
+            ->get()
+			;
+			if($chats){
+				return response()->json(['status' => "1",
+					'message'=> 'Chats obtained',
+					'data' => ChatResource::collection($chats), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Chat does not exist',
+					'data' => null, 
+				]);
+			}
+
+	}
+
+	function getUnreadNotifications(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$menuarray = Menu::get();
+			$data = array();
+			for($i = 0; $i < count($menuarray); $i++){
+           		 $men = $menuarray[$i];
+            	$title = $men->menutitle;
+            	$id = Menu::getIdForMenu($title);
+            	
+            	
+            	$chatidsPaidProduct = ChatThread::where('chatforproduct', $id)
+            	->where('chattype', 'ReservationRequest')->pluck('chatid')->toArray();
+            	$chatidsPaidReservedOnly = Reservation::where('reservationstatus', ReservationStatus::StatusReserved)->pluck('chatid')->toArray();
+            	$chatidsPaidNotReservedOnly = Reservation::where('reservationstatus', '!=', ReservationStatus::StatusReserved)->pluck('chatid')->toArray();
+
+            	$unreadPaid = ChatUser::whereIn('chatid', $chatidsPaidProduct)
+            	->whereIn('chatid', $chatidsPaidReservedOnly)
+            	->where('userid', $request->userid)->sum('unreadcount');
+            	$unreadPending = ChatUser::whereIn('chatid', $chatidsPaidProduct)
+            	->whereIn('chatid', $chatidsPaidNotReservedOnly)
+            	->where('userid', $request->userid)->sum('unreadcount');
+            	
+            	$data[$id] = ["Pending" => $unreadPending, "Paid" => $unreadPaid];
+        	}
+
+        	$properChats = ChatThread::where('chattype', 'Proper')->pluck('chatid')->toArray();
+        	$unreadPending = ChatUser::whereIn('chatid', $properChats)
+            	->where('userid', $request->userid)->sum('unreadcount');
+            	$data["Proper"] = ["Pending" => $unreadPending];
+            	return response()->json(['status' => "1",
+					'message'=> 'Unread count',
+					'data' => $data, 
+				]);
+	}
+
+	function deleteChat(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"chatid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$deleted = ChatThread::where('chatid', $request->chatid)->delete();
+			if($deleted){
+				return response()->json(['status' => "1",
+					'message'=> 'Chat deleted',
+					'data' => null, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Could not delete chat',
+					'data' => null, 
+				]);
+			}
+
+	}
+
+	function getUserRequests(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
 					'data' => null, 
 				]);
 			}
