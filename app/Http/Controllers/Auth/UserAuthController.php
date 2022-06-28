@@ -110,7 +110,7 @@ class UserAuthController extends Controller
 			return response()->json([
 					'message' => 'User registered',
 					'status' => "1",
-					'data' =>$profile,
+					'data' => new UserProfileFullResource($profile),
 			]);
 		    }
 		else
@@ -155,7 +155,7 @@ class UserAuthController extends Controller
 				return response()->json([
 						'message' => 'User logged in',
 						'status' => "1",
-						'data' =>$user,
+						'data' => new UserProfileFullResource($user),
 				]);
 			}
 			else{

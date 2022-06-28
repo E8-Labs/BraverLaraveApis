@@ -31,12 +31,12 @@ class UserProfileFullResource extends JsonResource
             "dateadded"=> $this->dateadded,
             "role"=> $this->role,
             "fcmtoken"=> $this->fcmtoken,
-            "url"=> $this->$image,
+            "url"=> $image,
             "accountstatus"=> $this->accountstatus,
             "deleted"=> $this->deleted,
             "myinvitecode"=> $this->myinvitecode,
             "invitedbycode"=> $this->invitedbycode,
-            "stripecustomerid"=> $this->stripecustomerid,,
+            "stripecustomerid"=> $this->stripecustomerid,
         ];
     }
 }
