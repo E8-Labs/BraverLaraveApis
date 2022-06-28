@@ -19,7 +19,7 @@ class MenuItemResource extends JsonResource
             "menutitle"=> $this->menutitle,
             "menuimage"=> \Config::get('constants.item_images_old') . $this->menuimage,
             "dateadded" => $this->dateadded,
-            "menuheader"=> \Config::get('constants.item_images_old') . $this->productid,
+            "menuheader"=> \Config::get('constants.item_images_old') . $this->menuheader,
         ];
     }
 }
