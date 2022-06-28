@@ -484,6 +484,41 @@ class PaymentController extends Controller
 	}
 
 
+	public function cancelReservation(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"reservationid" => 'required',
+			"fromid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			$reason = "";
+			if($request->has('reason')){
+				$reason = $request->reason;
+			}
+
+			$resid = $request->reservationid;
+			$fromid = $request->fromid;
+
+
+
+	}
+
+
 
 
 	public function getCryptoCharge($chargeid){

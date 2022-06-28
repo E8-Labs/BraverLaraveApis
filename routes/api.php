@@ -52,6 +52,7 @@ Route::get("deletechat",[ChatController::class,'deleteChat']);
 Route::get("unreadnotificationsadmin",[ChatController::class,'getUnreadNotifications']);
 
 Route::post("reserveyacht",[PaymentController::class,'makeReservation']);
+Route::post("cancelreservation",[PaymentController::class,'cancelReservation']);
 Route::post("create_crypto_charge",[PaymentController::class,'createCryptoChargeLinkOnServer']);
 
 

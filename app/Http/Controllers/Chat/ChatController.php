@@ -453,6 +453,7 @@ class ChatController extends Controller
 	}
 
 	function getUserRequests(Request $request){
+		$Size = 20;
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
 			"userid" => 'required',
@@ -473,6 +474,30 @@ class ChatController extends Controller
 					'data' => null, 
 				]);
 			}
+			$page = 1;
+			if($request->has('page')){
+				$page = $request->page;
+			}
+			$off_set = $page * $Size - $Size;
+
+			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$reserved = Reservation::where('reservationstatus', ReservationStatus::StatusReserved)->pluck('chatid')->toArray();
+			$requests = ChatThread::where('fromuserid', $request->userid)->whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
+			return $requests;
+			if($user->role == "ADMIN"){
+				$reserved = Reservation::pluck('chatid')->toArray();
+				$requests = ChatThread::where('fromuserid', $request->userid)->whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
+			}
+			else if ($user->role == "TEAM"){
+				$reserved = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
+				$requests = ChatThread::where('fromuserid', $request->userid)->whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
+			}
+
+			return response()->json(['status' => "1",
+					'message'=> 'Requests obtained',
+					'data' => ChatResource::collection($requests), 
+				]);
+			
 	}
 
 	private function saveChatUsers($users, $chat, $fromUser, $chatforproduct, $lastmessage){
