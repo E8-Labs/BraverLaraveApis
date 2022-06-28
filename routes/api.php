@@ -61,7 +61,7 @@ Route::post("searchpending",[UserController::class,'searchPending']);
 Route::post("searchactive",[UserController::class,'searchActive']);
 
 Route::post("pendingusers",[UserController::class,'searchPending']);
-Route::post("activeuses",[UserController::class,'searchActive']);
+Route::post("activeusers",[UserController::class,'searchActive']);
 
 Route::post("teammembers",[UserController::class,'adminTeamMembers']);
 Route::get("getuserbyid",[UserController::class,'getUser']);
