@@ -29,6 +29,7 @@ Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);
 Route::post("deleteuser",[UserController::class,'deleteUser']);
 Route::post("updateuser",[UserAuthController::class,'updateUser']);
+Route::post("updateinvitecode",[UserAuthController::class,'updateInviteCode']);
 Route::post("approveuser",[UserController::class,'approveUser']);
 
 Route::post("addcard",[PaymentController::class,'addCard']);
@@ -43,6 +44,8 @@ Route::post("featurelisting",[ListingController::class,'featuretListing']);
 
 //Chat
 Route::post("createchat",[ChatController::class,'createChat']);
+Route::post("uploadchatimage",[ChatController::class,'uploadChatImage']);
+Route::post("updatechat",[ChatController::class,'updateChat']);
 Route::get("getchatbyid",[ChatController::class,'getChatById']);
 Route::get("chatlistteam",[ChatController::class,'getTeamChat']);
 Route::get("chatlistadmin",[ChatController::class,'getTeamChat']);

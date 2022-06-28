@@ -167,6 +167,53 @@ class UserAuthController extends Controller
 			}
 		}
 
+		function updateInviteCode(Request $request){
+			$validator = Validator::make($request->all(), [
+			'userid' => 'required',
+			"apikey" => 'required',
+			'invitecode' => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$invitinguser = User::where('myinvitecode', $request->invitecode)->first();
+			if($invitinguser == NULL){
+				return response()->json(['status' => "0",
+					'message'=> 'No such invite code',
+					'data' => null, 
+				]);
+			}
+			
+			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user->invitedbycode = $request->invitecode;
+			$done = $user->save();
+			if($done){
+				return response()->json(['status' => "1",
+					'message'=> 'Updated invite code',
+					'data' => new UserProfileFullResource($user), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Invite code not updated',
+					'data' => null, 
+				]);
+			}
+		}
+
 
 		function updateUser(Request $request){
 

@@ -9,5 +9,6 @@ class ChatUser extends Model
 {
     use HasFactory;
     protected $table = "chatusers";
+    protected $primaryKey = 'chatuserid';
     public $timestamps = false;
 }

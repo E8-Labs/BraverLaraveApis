@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\Chat\ChatResource;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 use Carbon\Carbon;
 
@@ -356,6 +357,184 @@ class ChatController extends Controller
 					'data' => null, 
 				]);
 			}
+
+	}
+
+	function uploadChatImage(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+			"image" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			if($request->has('image')){
+				$ima = $request->image;
+				$fileName =  rand(). date("h:i:s").'image.png';
+	
+    			$ima = trim($ima);
+    			$ima = str_replace('data:image/png;base64,', '', $ima);
+    			$ima = str_replace('data:image/jpg;base64,', '', $ima);
+    			$ima = str_replace('data:image/jpeg;base64,', '', $ima);
+    			$ima = str_replace('data:image/gif;base64,', '', $ima);
+    			$ima = str_replace(' ', '+', $ima);
+			
+    			$imageData = base64_decode($ima);
+    			//Set image whole path here 
+    			$subpath = "/braver/storage/app/Images/Chat/";
+    			$filePath = $_SERVER['DOCUMENT_ROOT'].$subpath. $fileName;
+	
+	
+            	if(!Storage::exists($_SERVER['DOCUMENT_ROOT'].$subpath)){
+            	    Storage::makeDirectory($_SERVER['DOCUMENT_ROOT'].$subpath);
+            	}
+   				file_put_contents($filePath, $imageData);
+   				$url = $subpath. $fileName;
+   				return response()->json(['status' => "1",
+					'message'=> 'Image uploaded',
+					'data' => ["url" => $url], 
+					"url" => $url,
+				]);
+
+			}
+			else{
+
+			}
+	}
+
+
+	function updateChat(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"userid" => 'required',
+			"chatid" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$updateother = "0";
+			if($request->has('updateother')){
+				$updateother = $request->updateother;
+			}
+
+			$fromid = $request->userid;
+			$chatid = $request->chatid;
+			$chat = ChatThread::where('chatid', $chatid)->first();
+
+			if($request->has('productid')){
+				$chat->productid = $request->productid;
+			}
+			$lastmessage = "";
+			if($request->has('lastmessage')){
+				$lastmessage = $request->lastmessage;
+				$chat->lastmessage = $request->lastmessage;
+			}
+
+			
+
+			$saved = $chat->save();
+			if(!$saved){
+				return response()->json(['status' => "0",
+					'message'=> 'Error saving chat',
+					'data' => null, 
+				]);
+			}
+
+			$chatUsers = $chat->getChatUsers();
+
+			$fromuser = User::where('userid', $request->userid)->orWhere('id', $fromid)->first();
+            $fromname = $fromuser->name;
+			foreach($chatUsers as $cu){
+
+				if($cu->userid === $fromid){
+                    
+                }
+                else{
+                    $token = $cu->fcmtoken;
+                	$data = array();
+                	$data["title"] = $fromname;
+                	$data["body"] = $lastmessage;
+                	$data["sound"] = "default";
+                	$data["chatid"] = $chatid;
+                	$this->Push_Notification($token, $data);
+
+                }
+				
+			}
+
+			if($request->has('deleted')){
+				$deleted = $request->deleted;
+				foreach($deleted as $del){
+					ChatUser::where('chatid', $chatid)->where('userid', $del)->delete();
+				}
+			}
+
+			if($request->has('users')){
+				$users = $request->users;
+				if(count($users) > 0){
+					// ChatUser::where('chatid', $chatid)->where('role', 'Team')->delete();
+					foreach($users as $u){
+						$cu = ChatUser::where('chatid', $chatid)->where('userid', $u->userid)->first();
+						if($cu == NULL){
+							$cu = new ChatUser();
+						}
+						$u->chatid = $chatid;
+						$cu->userid = $u->userid;
+						$cu->role = 'Team';
+						$cu->save();
+
+
+					}
+				}
+			}
+			else{
+				// update unread count
+				if($updateother == "0"){
+
+					ChatUser::where('chatid', $chatid)->where('userid', $fromid)->update(['unreadcount' => 0]);
+
+				}
+				else{
+					ChatUser::where('chatid', $chatid)->where('userid', $fromid)->update(['unreadcount' => 0]);
+					ChatUser::where('chatid', $chatid)->where('userid', '!=', $fromid)->increment('unreadcount');
+				}
+			}
+
+
+			$chat = ChatThread::where('chatid', $chatid)->first();
+			return response()->json(['status' => "1",
+					'message'=> 'Chat updated',
+					'data' => new ChatResource($chat), 
+				]);
 
 	}
 

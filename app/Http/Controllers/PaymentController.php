@@ -506,15 +506,116 @@ class PaymentController extends Controller
 					'data' => null, 
 				]);
 			}
-			$reason = "";
-			if($request->has('reason')){
-				$reason = $request->reason;
-			}
+
 
 			$resid = $request->reservationid;
 			$fromid = $request->fromid;
 
+			$fromUser = User::where("userid", $fromid)->orWhere("id", $fromid)->first();
 
+			$res = Reservation::where('reservationid', $resid)->first();
+			$reason = "";
+			if($request->has('reason')){
+				$reason = $request->reason;
+				$res->reason = $reason;
+			}
+			if($res == NULL){
+				return response()->json(['status' => "0",
+					'message'=> 'No such reservation',
+					'data' => null, 
+				]);
+			}
+			$chargeid = $res->transactionid;
+
+			$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+			try {
+                    
+                $ref = $stripe->refunds->create([
+                'charge' => $chargeid,
+                ]);
+                if($ref->id == NULL){
+                	$er = $ref->ErrorCode;
+                	if($er == "charge_already_refunded"){
+                		return response()->json(['status' => "1",
+							'message'=> 'Already cancelled and refunded ' ,
+							'data' => null, 
+						]);
+						$res->reservationstatus = ReservationStatus::StatusCancedlled;
+                		$res->cancelledby = $fromid;
+                		$res->refunddate = Carbon::now()->toDateTimeString();
+                		$res->save();
+                	}
+                	
+                	return response()->json(['status' => "0",
+							'message'=> 'Error cancelling reservation ' ,
+							'data' => null, 
+					]);
+                	
+                }
+                else{
+                	$res->reservationstatus = ReservationStatus::StatusCancedlled;
+                	$res->cancelledby = $fromid;
+                	$res->refunddate = Carbon::now()->toDateTimeString();
+                	$res->refundid = $ref->id;
+                	$res->save();
+                	return response()->json(['status' => "1",
+							'message'=> 'Cancelled reservation and refunded ' ,
+							'data' => null, 
+					]);
+                }
+            }
+            catch(\Stripe\Exception\CardException $e) {
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getError()->message ,
+							'data' => null,
+							"refund"=> "charge not refunded", "ErrorCode" => $e->getError()->code, "type"=> $e->getError()->type 
+						]);
+                } catch (\Stripe\Exception\RateLimitException $e) {
+                  // Too many requests made to the API too quickly
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getError()->message ,
+							'data' => null,
+							"refund"=> "charge not refunded", "ErrorCode" => $e->getError()->code, "type"=> $e->getError()->type 
+						]);
+                } catch (\Stripe\Exception\InvalidRequestException $e) {
+                  // Invalid parameters were supplied to Stripe's API
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getError()->message ,
+							'data' => null,
+							"refund"=> "charge not refunded", "ErrorCode" => $e->getError()->code, "type"=> $e->getError()->type 
+						]);
+                } catch (\Stripe\Exception\AuthenticationException $e) {
+                  // Authentication with Stripe's API failed
+                  // (maybe you changed API keys recently)
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getError()->message ,
+							'data' => null,
+							"refund"=> "charge not refunded", "ErrorCode" => $e->getError()->code, "type"=> $e->getError()->type 
+						]);
+                } catch (\Stripe\Exception\ApiConnectionException $e) {
+                  // Network communication with Stripe failed
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getError()->message ,
+							'data' => null,
+							"refund"=> "charge not refunded", "ErrorCode" => $e->getError()->code, "type"=> $e->getError()->type 
+						]);
+                } catch (\Stripe\Exception\ApiErrorException $e) {
+                  // Display a very generic error to the user, and maybe send
+                  // yourself an email
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getError()->message ,
+							'data' => null,
+							"refund"=> "charge not refunded", "ErrorCode" => $e->getError()->code, "type"=> $e->getError()->type 
+						]);
+                } catch (Exception $e) {
+                  // Something else happened, completely unrelated to Stripe
+                  	return response()->json(['status' => "1",
+							'message'=> $e->getMessage() ,
+							'data' => null,
+							"refund"=> "charge not refunded",
+						]);
+            	}
+        	
 
 	}
 
