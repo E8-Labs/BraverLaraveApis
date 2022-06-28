@@ -7,6 +7,9 @@ use App\Models\Chat\ChatUser;
 use App\Models\Auth\User;
 use App\Models\Listing;
 
+use App\Http\Resources\User\UserProfileFullResource;
+use App\Http\Resources\User\UserProfileLiteResource;
+
 class ChatResource extends JsonResource
 {
     /**
@@ -31,7 +34,7 @@ class ChatResource extends JsonResource
             "chatforproduct" => $this->chatforproduct,
             "customaddress" => $this->customaddress,
             "product" => $p,
-            "users" => $users,
+            "users" => UserProfileLiteResource::collection($users),
         ];
     }
 }

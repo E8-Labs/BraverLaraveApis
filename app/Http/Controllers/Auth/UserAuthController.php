@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+
+use App\Http\Resources\User\UserProfileFullResource;
+use App\Http\Resources\User\UserProfileLiteResource;
+
+// use Illuminate\Support\Facades\Files;
 // use JWTAuth;
 // use Tymon\JWTAuth\Exceptions\JWTException;
 // use App\Http\Resources\UserProfileResource;
@@ -25,8 +30,8 @@ class UserAuthController extends Controller
 	{
 			
 			$validator = Validator::make($req->all(), [
-			'email' => 'required|string|email|max:255|unique:users',
-			'phone' => 'required|unique:users',
+			'email' => 'required|string|email|max:255|unique:user',
+			'phone' => 'required|unique:user',
 			'password' => 'required|string|max:40',
 			"apikey" => 'required',
 				]);
@@ -45,11 +50,14 @@ class UserAuthController extends Controller
 					'data' => null, 
 				]);
 			}
+			
+			
 				
 		DB::beginTransaction();
 		$code = rand ( 10000 , 99999 );//Str::random(5);
 		$user_id = uniqid();
-		$user=new User;
+		$user=new User();
+		$user->baseUrlType = "New";
 		$user->userid = $user_id;
 		$user->phone=$req->phone;
 		$user->email=$req->email;
@@ -78,11 +86,14 @@ class UserAuthController extends Controller
 		
     		$imageData = base64_decode($ima);
     		//Set image whole path here 
-    		$filePath = $_SERVER['DOCUMENT_ROOT']."/". $fileName;
+    		$filePath = $_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/". $fileName;
 
 // return $filePath;
+            if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/")){
+                Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/");
+            }
    			file_put_contents($filePath, $imageData);
-   			$user->url = $filePath;
+   			$user->url = "/braver/storage/app/Images/". $fileName;
 
 		}
 		$user->password=Hash::make($req->password);
@@ -129,7 +140,7 @@ class UserAuthController extends Controller
 					'data' => null, 
 					'validation_errors'=> $validator->errors()]);
 			}
-
+// return "Login";
 			$key = $request->apikey;
 			if($key != $this->APIKEY){ // get value from constants
 				return response()->json(['status' => "0",
@@ -137,7 +148,7 @@ class UserAuthController extends Controller
 					'data' => null, 
 				]);
 			}
-
+    
 
 			$user = User::where('email', $request->email)->first();
 			if (Hash::check($request->password, $user->password)) {

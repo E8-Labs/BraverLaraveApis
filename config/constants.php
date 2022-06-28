@@ -23,7 +23,8 @@
 
 
 
-    'profile_images' => 'http://seedmarket.tech/public_html/public/storage/profile_images/',
+    'profile_images_old' => 'http://braverhospitalityapp.com/phg/',
+    'profile_images_new' => 'http://braverhospitalityapp.com/braver',
     'profile_images_save' => 'public/profile_images/',
 
 

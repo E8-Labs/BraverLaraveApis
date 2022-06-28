@@ -9,6 +9,9 @@ use App\Models\Auth\UserType;
 use App\Models\Auth\AccountStatus;
 use Illuminate\Support\Facades\Validator;
 
+use App\Http\Resources\User\UserProfileFullResource;
+use App\Http\Resources\User\UserProfileLiteResource;
+
 class UserController extends Controller
 {
     //
