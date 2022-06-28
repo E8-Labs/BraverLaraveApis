@@ -9,6 +9,8 @@ use App\Models\Menu;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Validator;
 
+use App\Http\Resources\Menu\MenuItemResource;
+
 class MenuController extends Controller
 {
     //
@@ -35,7 +37,7 @@ class MenuController extends Controller
 			$menus = Menu::get();
 			return response()->json(['status' => "1",
 					'message'=> 'Menu list',
-					'data' => $menus, 
+					'data' => MenuItemResource::collection($menus), 
 				]);
 
     }

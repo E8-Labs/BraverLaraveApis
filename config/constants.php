@@ -29,7 +29,7 @@
 
 
     'item_images_old' => 'http://braverhospitalityapp.com/phg/',
-    'item_images' => 'http://braverhospitality.com/public_html/public/storage/item_images/',
+    'item_images' => 'http://braverhospitalityapp.com/braver/storage/app/',
     'item_images_save' => 'public/item_images/',
 
 
