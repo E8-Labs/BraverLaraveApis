@@ -143,7 +143,7 @@ class ListingController extends Controller
 				DB::commit();
 				return response()->json(['status' => true,
 					'message'=> 'Listing  added',
-					'data'=> $listing
+					'data'=> new ListingResource($listing)
 
 				]);
 
