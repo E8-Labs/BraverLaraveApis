@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Listings\ListingController;
+use App\Http\Controllers\Listings\EditListingController;
 use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\NotificationController;
 
@@ -37,6 +38,7 @@ Route::post("addcard",[PaymentController::class,'addCard']);
 Route::post("cardlist",[PaymentController::class,'cardList']);
 
 Route::post("addyacht",[ListingController::class,'addListing']);
+Route::post("edityacht",[EditListingController::class,'editListing']);
 Route::get("listyachts",[ListingController::class,'getListings']);
 Route::get("getyachtbyid",[ListingController::class,'getListingById']);
 Route::post("reportlisting",[ListingController::class,'reportListing']);

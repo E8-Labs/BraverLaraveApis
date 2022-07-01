@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\User\UserProfileFullResource;
 use App\Http\Resources\User\UserProfileLiteResource;
 
+use Carbon\Carbon;
 // use Illuminate\Support\Facades\Files;
 // use JWTAuth;
 // use Tymon\JWTAuth\Exceptions\JWTException;
@@ -168,22 +169,25 @@ class UserAuthController extends Controller
 
 			$user = User::where('email', $request->email)->first();
 			if (Hash::check($request->password, $user->password)) {
-
+                $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
 				$data = [
 				    "first_name" => $user->name,
 				    "last_name" => $user->name,
 				    "phone" => $user->phone,
 				    "email" => $user->email,
-				    "dob" => $user->dob,
+				    "dob" => $dob,
 				    "ssn" => $user->ssn,
 				    // "zipcode"=>$login['zip'],
 				];
-				$id = $this->createCheckrCandidate($data);
-				if($id){
-					User::where('userid', $user->userid)->update(['chekrcandidateid' => $id]);
+				
+				$json = $this->createCheckrCandidate($data);
+				$chekr_error = null;
+				if(array_key_exists('id', $json)){
+				    
+					User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
 				}
 				else{
-	
+	                $chekr_error = $json['error'];
 				}
 
 
@@ -191,6 +195,8 @@ class UserAuthController extends Controller
 						'message' => 'User logged in',
 						'status' => "1",
 						'data' => new UserProfileFullResource($user),
+						'chekr_error' => $chekr_error,
+						'dob' => $dob,
 				]);
 			}
 			else{

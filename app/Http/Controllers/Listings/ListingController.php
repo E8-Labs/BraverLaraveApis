@@ -110,6 +110,12 @@ class ListingController extends Controller
 			$data=$req->file('seatingimage')->store('Images');
    			$listing->seatingimage = $data;
 		}
+		else if ($req->has('seatingimage')){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->seatingimage, "/braver/storage/app/Images/");
+			// $result = $this->saveImage($url, $listing_id, "", "Image");
+			$listing->seatingimage = $url;
+		}
 		else{
 			$listing->seatingimage = '';
 		}
@@ -154,6 +160,20 @@ class ListingController extends Controller
 	function AddImages(Request $req ,$listing_id)
 	{
 		$saved = array();
+
+		if($req->hasFile('image0'))
+		{
+			$data=$req->file('image0')->store('Images/Listing');
+			$result = $this->saveImage($data, $listing_id, "", "Image");
+			$saved[] = $result;
+		}
+		else if ($req->has('image0')){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image0, "/braver/storage/app/Images/");
+			$result = $this->saveImage($url, $listing_id, "", "Image");
+			$saved[] = $result;
+		}
+
 		if($req->hasFile('image1'))
 		{
 			$data=$req->file('image1')->store('Images/Listing');

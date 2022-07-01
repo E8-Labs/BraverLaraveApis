@@ -82,6 +82,7 @@ class Controller extends BaseController
     }
 
     public function createCheckrCandidate($data){
+        $data["copy_requested"] = true;
         $api_key = env('chekrapikey');
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/candidates');
@@ -97,7 +98,8 @@ class Controller extends BaseController
         curl_close($curl);
         
         $json = json_decode($response, true);
-        if($array_key_exists('id', $json)){
+        return $json;
+        if(array_key_exists('id', $json)){
             return $json['id'];
         }
         return NULL;
