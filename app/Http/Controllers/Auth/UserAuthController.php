@@ -106,7 +106,23 @@ class UserAuthController extends Controller
 				
 			DB::commit();
 			$profile = User::where('userid', $user_id)->first();
-			// $data = ['profile'=> new UserProfileResource($profile), 'access_token'=> compact('token')];
+			// $data = ['profile'=> new UserProfileResource($profile), 'access_token'=> compact('token')];chekrcandidateid
+			$data = [
+			    "first_name" => $profile->name,
+			    "last_name" => $profile->name,
+			    "phone" => $profile->phone,
+			    "email" => $profile->email,
+			    "dob" => $profile->dob,
+			    "ssn" => $profile->ssn,
+			    // "zipcode"=>$login['zip'],
+			];
+			$id = $this->createCheckrCandidate($data);
+			if($id){
+				User::where('userid', $user_id)->update(['chekrcandidateid' => $id]);
+			}
+			else{
+
+			}
 			return response()->json([
 					'message' => 'User registered',
 					'status' => "1",
@@ -152,6 +168,25 @@ class UserAuthController extends Controller
 
 			$user = User::where('email', $request->email)->first();
 			if (Hash::check($request->password, $user->password)) {
+
+				$data = [
+				    "first_name" => $user->name,
+				    "last_name" => $user->name,
+				    "phone" => $user->phone,
+				    "email" => $user->email,
+				    "dob" => $user->dob,
+				    "ssn" => $user->ssn,
+				    // "zipcode"=>$login['zip'],
+				];
+				$id = $this->createCheckrCandidate($data);
+				if($id){
+					User::where('userid', $user->userid)->update(['chekrcandidateid' => $id]);
+				}
+				else{
+	
+				}
+
+
 				return response()->json([
 						'message' => 'User logged in',
 						'status' => "1",

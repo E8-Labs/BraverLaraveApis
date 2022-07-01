@@ -38,7 +38,7 @@ class Controller extends BaseController
                 Storage::makeDirectory($_SERVER['DOCUMENT_ROOT'].$domain);
             }
             file_put_contents($filePath, $imageData);
-            return $domain.$fileName;
+            return "Images/".$fileName;
 
         
     }
@@ -81,37 +81,25 @@ class Controller extends BaseController
         }
     }
 
-
-    // public function uploads($file, $path)
-    // {
-    //     if($file) {
-
-    //         $fileName   = time() . $file->getClientOriginalName();
-    //         Storage::disk('public')->put($path . $fileName, File::get($file));
-    //         $file_name  = $file->getClientOriginalName();
-    //         $file_type  = $file->getClientOriginalExtension();
-    //         $filePath   = 'storage/'.$path . $fileName;
-
-    //         return $file = [
-    //             'fileName' => $file_name,
-    //             'fileType' => $file_type,
-    //             'filePath' => $filePath,
-    //             'fileSize' => $this->fileSize($file)
-    //         ];
-    //     }
-    // }
-
-    // public function fileSize($file, $precision = 2)
-    // {   
-    //     $size = $file->getSize();
-
-    //     if ( $size > 0 ) {
-    //         $size = (int) $size;
-    //         $base = log($size) / log(1024);
-    //         $suffixes = array(' bytes', ' KB', ' MB', ' GB', ' TB');
-    //         return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
-    //     }
-
-    //     return $size;
-    // }
+    public function createCheckrCandidate($data){
+        $api_key = env('chekrapikey');
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/candidates');
+        curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+        
+        $response = curl_exec($curl);
+        $http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        
+        curl_close($curl);
+        
+        $json = json_decode($response, true);
+        if($array_key_exists('id', $json)){
+            return $json['id'];
+        }
+        return NULL;
+    }
 }
