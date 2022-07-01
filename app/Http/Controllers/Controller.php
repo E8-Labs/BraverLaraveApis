@@ -16,6 +16,33 @@ class Controller extends BaseController
     private $API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
 
 
+//"/braver/storage/app/Images/"
+    public function saveBase64Iamge($image,$domain){
+        
+            $ima = $image;
+            $fileName =  rand(). date("h:i:s").'image.png';
+
+            $ima = trim($ima);
+            $ima = str_replace('data:image/png;base64,', '', $ima);
+            $ima = str_replace('data:image/jpg;base64,', '', $ima);
+            $ima = str_replace('data:image/jpeg;base64,', '', $ima);
+            $ima = str_replace('data:image/gif;base64,', '', $ima);
+            $ima = str_replace(' ', '+', $ima);
+        
+            $imageData = base64_decode($ima);
+            //Set image whole path here 
+            $filePath = $_SERVER['DOCUMENT_ROOT'].$domain. $fileName;
+
+// return $filePath;
+            if(!Storage::exists($_SERVER['DOCUMENT_ROOT'].$domain)){
+                Storage::makeDirectory($_SERVER['DOCUMENT_ROOT'].$domain);
+            }
+            file_put_contents($filePath, $imageData);
+            return $domain.$fileName;
+
+        
+    }
+
     public function Push_Notification($token,$data) {
         try{
 

@@ -162,6 +162,41 @@ class PaymentController extends Controller
 	}
 
 
+	function deleteCard(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"stripecardid" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+        	$sub = $stripe->customers->deleteSource(
+            	$customerid,
+            	$cardid,
+            	[]
+        	);
+        	Card::where('stripecardid', $request->stripecardid)->delete();
+        	return response()->json(['status' => "1",
+					'message'=> 'Card deleted',
+					'data' => null, 
+				]);
+	}
+
+
 	function cardList(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',

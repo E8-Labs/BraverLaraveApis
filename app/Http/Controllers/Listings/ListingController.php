@@ -160,12 +160,22 @@ class ListingController extends Controller
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
 		}
+		else if $req->has('image1'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image1, "/braver/storage/app/Images/");
+			$saved[] = $url;
+		}
 
 		if($req->hasFile('image2'))
 		{
 			$data=$req->file('image2')->store('Images/Listing');
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
+		}
+		else if $req->has('image2'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image2, "/braver/storage/app/Images/");
+			$saved[] = $url;
 		}
 
 		if($req->hasFile('image3'))
@@ -175,12 +185,22 @@ class ListingController extends Controller
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
 		}
+		else if $req->has('image3'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image3, "/braver/storage/app/Images/");
+			$saved[] = $url;
+		}
 
 		if($req->hasFile('image4'))
 		{
 			$data=$req->file('image4')->store('Images/Listing');
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
+		}
+		else if $req->has('image4'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image4, "/braver/storage/app/Images/");
+			$saved[] = $url;
 		}
 
 		if($req->hasFile('image5'))
@@ -189,12 +209,22 @@ class ListingController extends Controller
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
 		}
+		else if $req->has('image5'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image5, "/braver/storage/app/Images/");
+			$saved[] = $url;
+		}
 
 		if($req->hasFile('image6'))
 		{
 			$data=$req->file('image6')->store('Images/Listing');
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
+		}
+		else if $req->has('image6'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image6, "/braver/storage/app/Images/");
+			$saved[] = $url;
 		}
 
 		if($req->hasFile('image7'))
@@ -203,12 +233,22 @@ class ListingController extends Controller
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
 		}
+		else if $req->has('image7'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image7, "/braver/storage/app/Images/");
+			$saved[] = $url;
+		}
 
 		if($req->hasFile('image8'))
 		{
 			$data=$req->file('image8')->store('Images/Listing');
 			$result = $this->saveImage($data, $listing_id, "", "Image");
 			$saved[] = $result;
+		}
+		else if $req->has('image8'){
+			// base64 image
+			$url = $this->saveBase64Iamge($req->image8, "/braver/storage/app/Images/");
+			$saved[] = $url;
 		}
 
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Listings\ListingController;
 use App\Http\Controllers\Chat\ChatController;
+use App\Http\Controllers\NotificationController;
 
 
 /*
@@ -57,8 +58,12 @@ Route::get("unreadnotificationsadmin",[ChatController::class,'getUnreadNotificat
 Route::post("reserveyacht",[PaymentController::class,'makeReservation']);
 Route::post("cancelreservation",[PaymentController::class,'cancelReservation']);
 Route::post("create_crypto_charge",[PaymentController::class,'createCryptoChargeLinkOnServer']);
+Route::post("deletecard",[PaymentController::class,'deleteCard']);
 
 
+//Notifications
+Route::post("add_notification",[NotificationController::class,'addNotification']);
+Route::get("notifications_list",[NotificationController::class,'notificationsList']);
 
 Route::post("searchpending",[UserController::class,'searchPending']);
 Route::post("searchactive",[UserController::class,'searchActive']);
