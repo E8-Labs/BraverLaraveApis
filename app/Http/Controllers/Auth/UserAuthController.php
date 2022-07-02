@@ -61,11 +61,11 @@ class UserAuthController extends Controller
 		$user->baseUrlType = "New";
 		$user->userid = $user_id;
 		$user->phone=$req->phone;
-		if($request->has('ssn')){
-			$user->ssn = $request->ssn;
+		if($req->has('ssn')){
+			$user->ssn = $req->ssn;
 		}
-		if($request->has('last_name')){
-			$user->lastname = $request->last_name;
+		if($req->has('last_name')){
+			$user->lastname = $req->last_name;
 		}
 		$user->email=$req->email;
 		$role = UserType::TypeUser;
@@ -144,22 +144,22 @@ class UserAuthController extends Controller
                             
                         }
 			// $data = ['profile'=> new UserProfileResource($profile), 'access_token'=> compact('token')];chekrcandidateid
-			$data = [
-			    "first_name" => $profile->name,
-			    "last_name" => $profile->name,
-			    "phone" => $profile->phone,
-			    "email" => $profile->email,
-			    "dob" => $profile->dob,
-			    "ssn" => $profile->ssn,
-			    // "zipcode"=>$login['zip'],
-			];
-			$id = $this->createCheckrCandidate($data);
-			if($id){
-				User::where('userid', $user_id)->update(['chekrcandidateid' => $id]);
-			}
-			else{
+// 			$data = [
+// 			    "first_name" => $profile->name,
+// 			    "last_name" => $profile->name,
+// 			    "phone" => $profile->phone,
+// 			    "email" => $profile->email,
+// 			    "dob" => $profile->dob,
+// 			    "ssn" => $profile->ssn,
+// 			    // "zipcode"=>$login['zip'],
+// 			];
+// 			$id = $this->createCheckrCandidate($data);
+// 			if($id){
+// 				User::where('userid', $user_id)->update(['chekrcandidateid' => $id]);
+// 			}
+// 			else{
 
-			}
+// 			}
 			return response()->json([
 					'message' => 'User registered',
 					'status' => "1",
@@ -432,6 +432,42 @@ class UserAuthController extends Controller
 					'data' => null, 
 				]);
         	}
+        }
+
+        function checkEmailExists(Request $request){
+        	$validator = Validator::make($request->all(), [
+			'email' => 'required',
+			"apikey" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$user = User::where('email', $request->email)->first();
+			if($user){
+				return response()->json(['status' => "0",
+					'message'=> 'Email already taken',
+					'data' => null, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "1",
+					'message'=> 'Email available',
+					'data' => null, 
+				]);
+			}
         }
 		
 }

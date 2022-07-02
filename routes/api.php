@@ -36,6 +36,7 @@ Route::get('reset-password/{token}', [AuthForgotPasswordController::class, 'show
 Route::post('reset-password', [AuthForgotPasswordController::class, 'submitResetPasswordForm'])->name('reset.password.post');
 
 
+Route::post("checkemail",[UserAuthController::class,'checkEmailExists']);
 Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);
 Route::post("deleteuser",[UserController::class,'deleteUser']);
