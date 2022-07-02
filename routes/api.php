@@ -10,6 +10,7 @@ use App\Http\Controllers\Listings\ListingController;
 use App\Http\Controllers\Listings\EditListingController;
 use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AuthForgotPasswordController;
 
 
 /*
@@ -26,6 +27,14 @@ use App\Http\Controllers\NotificationController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('forgot_password', [AuthForgotPasswordController::class, 'submitForgetPasswordForm']);//->name('reset.password.post');
+
+// Route::get('forget-password', [ForgotPasswordController::class, 'showForgetPasswordForm'])->name('forget.password.get');
+// Route::post('forget-password', [ForgotPasswordController::class, 'submitForgetPasswordForm'])->name('forget.password.post'); 
+Route::get('reset-password/{token}', [AuthForgotPasswordController::class, 'showResetPasswordForm'])->name('reset.password.get');
+Route::post('reset-password', [AuthForgotPasswordController::class, 'submitResetPasswordForm'])->name('reset.password.post');
+
 
 Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);
