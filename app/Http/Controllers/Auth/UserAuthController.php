@@ -61,6 +61,12 @@ class UserAuthController extends Controller
 		$user->baseUrlType = "New";
 		$user->userid = $user_id;
 		$user->phone=$req->phone;
+		if($request->has('ssn')){
+			$user->ssn = $request->ssn;
+		}
+		if($request->has('last_name')){
+			$user->lastname = $request->last_name;
+		}
 		$user->email=$req->email;
 		$role = UserType::TypeUser;
 		if($req->has('role')){
