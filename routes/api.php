@@ -54,6 +54,8 @@ Route::get("getyachtbyid",[ListingController::class,'getListingById']);
 Route::post("reportlisting",[ListingController::class,'reportListing']);
 Route::post("featurelisting",[ListingController::class,'featuretListing']);
 
+Route::get("getchekrreport",[UserAuthController::class,'getChekrReport']);
+Route::get("createchekrreport",[UserAuthController::class,'createChekrReport']);
 
 //Chat
 Route::post("createchat",[ChatController::class,'createChat']);

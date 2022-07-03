@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\User\UserProfileFullResource;
 use App\Http\Resources\User\UserProfileLiteResource;
 
+use App\Http\Controllers\ReportController;
+
 use Carbon\Carbon;
 // use Illuminate\Support\Facades\Files;
 // use JWTAuth;
@@ -26,6 +28,57 @@ use Carbon\Carbon;
 class UserAuthController extends Controller
 {
     //
+
+    function getChekrReport(Request $request){
+    	$userid = $request->userid;
+    	$user = User::where('userid', $userid)->first();
+    	$rep = new ReportController();
+    	// return $user->chekrcandidateid;
+    	$report = $this->getchekrreportFromServer($user);//$rep->getCheckrReport($user->chekrcandidateid);//
+
+    	return response()->json(['status' => "1",
+			'message'=> 'Report',
+			'data' => $report, 
+		]);
+
+    }
+
+
+    function createChekrReport(Request $request){
+    	$userid = $request->userid;
+    	$user = User::where('userid', $userid)->first();
+
+    	$rep = new ReportController();
+    	if($user->chekrreportid != NULL){
+    		// return "report id not null";
+    		$report = $this->getchekrreportFromServer($user);
+    		return response()->json(['status' => "1",
+					'message'=> 'Report created',
+					'data' => $report, 
+			]);
+    	}
+    	else{
+    		$report = $rep->getCheckrReport($user->chekrcandidateid);//
+    		$report_error = null;
+    		// return $report;
+    		if(!isset($report->error)){
+    			$id = $report->id;
+    			User::where('userid', $user->userid)->update(['chekrreportid' => $id]);
+    			return response()->json(['status' => "1",
+					'message'=> 'Report created',
+					'data' => $report, 
+				]);
+    		}
+    		else{
+    			$report_error = $report->error;
+    			return response()->json(['status' => "0",
+					'message'=> $report_error,
+					'data' => null, 
+				]);
+    		}
+    	}
+    	
+    }
 
     function Register(Request $req)
 	{
@@ -127,7 +180,7 @@ class UserAuthController extends Controller
 			        	        "email" => $user->email,
 			        	        "dob" => $dob,
 			        	        "ssn" => $user->ssn,
-			        	        // "zipcode"=>$login['zip'],
+			        	        "zipcode"=>$user->zip,
 			        	    ];
 			        	    
 			        	    $json = $this->createCheckrCandidate($data);
@@ -204,43 +257,74 @@ class UserAuthController extends Controller
     
             
 			$user = User::where('email', $request->email)->first();
-// 			return response()->json(['status' => "0",
-// 					'message'=> 'custom error',
-// 					'user' => $user, 
-// 					'data' => null,
-// 				]);
+			if($user == NULL){
+				return response()->json(['status' => "0",
+					'message'=> 'No such user',
+					'data' => null,
+				]);
+			}
+			// return response()->json(['status' => "0",
+			// 		'message'=> 'custom error',
+			// 		'user' => $user, 
+			// 		'data' => null,
+			// 	]);
 
             try{
                     if (Hash::check($request->password, $user->password)) {
                         
-                        $dob = '';
                         $chekr_error = null;
-                        if($user->dob){
-                            // return ["date" => "". $user->dob];
-                            $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
-                            
-                            $data = [
-			        	        "first_name" => $user->name,
-			        	        "last_name" => $user->name,
-			        	        "phone" => $user->phone,
-			        	        "email" => $user->email,
-			        	        "dob" => $dob,
-			        	        "ssn" => $user->ssn,
-			        	        // "zipcode"=>$login['zip'],
-			        	    ];
-			        	    
-			        	    $json = $this->createCheckrCandidate($data);
-			        	    
-			        	    if(array_key_exists('id', $json)){
-			        	        
-			        	    	User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
-			        	    }
-			        	    else{
-	                            $chekr_error = $json['error'];
-			        	    }
+                        if($user->chekrcandidateid == NULL){
+                        	$dob = '';
+                        	
+                        	if($user->dob){
+                        	    // return ["date" => "". $user->dob];
+                        	    $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
+                        	    
+                        	    $data = [
+			        		        "first_name" => $user->name,
+			        		        "last_name" => $user->name,
+			        		        "phone" => $user->phone,
+			        		        "email" => $user->email,
+			        		        "dob" => $dob,
+			        		        "ssn" => $user->ssn,
+			        		        "zipcode"=>$user->zip,
+			        		    ];
+			        		    
+			        		    $json = $this->createCheckrCandidate($data);
+			        		    
+			        		    if(array_key_exists('id', $json)){
+			        		    	$user->chekrcandidateid = $json['id'];
+			        		        
+			        		    	User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
+	
+	
+			        		    }
+			        		    else{
+	                    	        $chekr_error = $json['error'];
+			        		    }
+                        	}
+                        	else{
+                        	    
+                        	}
+                        }
+                        $report_error = null;
+
+                        if($user->chekrreportid != NULL){
+                        	$report = $this->getchekrreportFromServer($user);
                         }
                         else{
-                            
+                        	$rep = new ReportController();
+    						$report = $rep->getCheckrReport($user->chekrcandidateid);//
+    						
+    						if(!isset($report->error)){
+    							$id = $report->id;
+    							$user->chekrreportid = $id;
+    							$report = $this->getchekrreportFromServer($user);
+    							User::where('userid', $user->userid)->update(['chekrreportid' => $id]);
+    						}
+    						else{
+    							$report_error = $report->error;
+    						}
                         }
                         
 			        	
@@ -251,7 +335,7 @@ class UserAuthController extends Controller
 			        			'status' => "1",
 			        			'data' => new UserProfileFullResource($user),
 			        			'chekr_error' => $chekr_error,
-			        			'dob' => $dob,
+			        			"report_error" => $report_error,
 			        	]);
 			        }
 			        else{

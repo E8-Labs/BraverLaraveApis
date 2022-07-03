@@ -65,7 +65,7 @@ class AuthForgotPasswordController extends Controller
           return response()->json(
             [
                 "message" => "Email sent",
-                "status" => true,
+                "status" => "1",
                 'data' => null,
             ],
             200);

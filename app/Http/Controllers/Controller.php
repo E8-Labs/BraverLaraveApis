@@ -8,6 +8,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use app\Models\Auth\User;
 
 class Controller extends BaseController
 {
@@ -83,6 +84,7 @@ class Controller extends BaseController
 
     public function createCheckrCandidate($data){
         $data["copy_requested"] = true;
+        $data['no_middle_name'] = true;
         $api_key = env('chekrapikey');
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/candidates');
@@ -103,5 +105,227 @@ class Controller extends BaseController
             return $json['id'];
         }
         return NULL;
+    }
+
+
+    public function getchekrreportFromServer($user)
+    {
+       //echo "<pre>".print_r($_REQUEST,true)."</pre"; die();
+       
+
+        try {
+            
+            $userid = $user->userid;
+           $getuser = $user;
+        if ($getuser) {
+            $chekr=$getuser['chekrreportid'];
+            // if($chekr == null){
+            //     $rep = new ReportController();
+                
+            //     $report = $rep->getCheckrReport($user->chekrcandidateid);
+            //     // return $report;
+            //     $chekr = $report['id'];
+            // }
+         if ($chekr != null) {
+               $api_key=env('chekrapikey');  
+          $curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/reports/'.$chekr);
+curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POST, false);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+ 
+$json = curl_exec($curl);
+$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+ 
+curl_close($curl);
+   
+  //$ssnid=$json['data']['ssn_trace_id'];
+ //$ssnid=$json['ssn_trace_id'];
+//var_dump($ssnid); exit;
+$response = json_decode($json);
+
+  $myArray = json_decode(json_encode($response), true);
+  $ssnid=$myArray['ssn_trace_id'];
+  $sexoid=$myArray['sex_offender_search_id'];
+  $nationalid=$myArray['national_criminal_search_id'];
+  $federalid=$myArray['federal_criminal_search_id'];
+  $stateid=$myArray['state_criminal_search_ids'];
+  //$docid=$myArray['document_ids'];
+ 
+if ($ssnid != null) {
+               $api_key=env('chekrapikey');  
+          $curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/ssn_traces/'.$ssnid);
+curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POST, false);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+ 
+$json = curl_exec($curl);
+$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+ 
+curl_close($curl);
+   
+  //$ssnid=$json['data']['ssn_trace_id'];
+ //$ssnid=$json['ssn_trace_id'];
+//var_dump($ssnid); exit;
+$response = json_decode($json);
+
+  $myArrays = json_decode(json_encode($response), true);
+  $ssnstatus=$myArrays['status'];
+ 
+}else{
+ $ssnstatus=null;   
+}
+if ($sexoid != null) {
+               $api_key=env('chekrapikey');  
+          $curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/sex_offender_searches/'.$sexoid);
+curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POST, false);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+ 
+$json = curl_exec($curl);
+$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+ 
+curl_close($curl);
+   
+  //$ssnid=$json['data']['ssn_trace_id'];
+ //$ssnid=$json['ssn_trace_id'];
+//var_dump($ssnid); exit;
+$response = json_decode($json);
+
+  $myArrayssex = json_decode(json_encode($response), true);
+  $sexstatus=$myArrayssex['status'];
+ 
+  
+}else{
+    $sexstatus=null;
+}
+if ($nationalid != null) {
+               $api_key=env('chekrapikey');  
+          $curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/national_criminal_searches/'.$nationalid);
+curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POST, false);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+ 
+$json = curl_exec($curl);
+$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+ 
+curl_close($curl);
+   
+  //$ssnid=$json['data']['ssn_trace_id'];
+ //$ssnid=$json['ssn_trace_id'];
+//var_dump($ssnid); exit;
+$response = json_decode($json);
+
+  $myArraysnat = json_decode(json_encode($response), true);
+  $natstatus=$myArraysnat['status'];
+ 
+  
+}else{
+    $natstatus=null;
+}
+if ($federalid != null) {
+               $api_key=env('chekrapikey');  
+          $curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/federal_criminal_searches/'.$federalid);
+curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POST, false);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+ 
+$json = curl_exec($curl);
+$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+ 
+curl_close($curl);
+   
+  //$ssnid=$json['data']['ssn_trace_id'];
+ //$ssnid=$json['ssn_trace_id'];
+//var_dump($ssnid); exit;
+$response = json_decode($json);
+
+  $myArraysfed = json_decode(json_encode($response), true);
+  $fedstatus=$myArraysfed['status'];
+ 
+  
+}else{
+    $fedstatus=null;
+}if ($stateid) {
+if ($stateid->count() > 0) {
+            $sid=$stateid[0];
+               $api_key=env('chekrapikey');  
+          $curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/state_criminal_searches/'.$sid);
+curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POST, false);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+ 
+$json = curl_exec($curl);
+$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+ 
+curl_close($curl);
+   
+  //$ssnid=$json['data']['ssn_trace_id'];
+ //$ssnid=$json['ssn_trace_id'];
+//var_dump($ssnid); exit;
+$response = json_decode($json);
+
+  $myArrayssta = json_decode(json_encode($response), true);
+  $statestatus=$myArrayssta['status'];
+ 
+  
+}else{
+    $statestatus=null;
+}}else{
+  $statestatus=null;  
+}
+
+$sarray=array();
+$sarray['ssn_trace']=$ssnstatus;
+$sarray['sex_offender_status']=$sexstatus;
+$sarray['national_status']=$natstatus;
+$sarray['federal_status']=$fedstatus;
+$sarray['state_status']=$statestatus;
+
+ User::where('userid',$getuser['userid'])->update(['ssn_trace'=> $ssnstatus,'sex_offender_status'=> $sexstatus,'national_status'=> $natstatus,'federal_status'=> $fedstatus,'state_status'=> $statestatus]);
+  
+
+
+//var_dump($stateid); exit;
+ 
+ 
+//echo $ssnid
+       
+
+return $sarray;
+// return $this->generate_response(true,"Success!",$sarray,200);
+
+         }else{
+            return "Candidate didn't create report until now.";
+             // return $this->generate_response(true,"Candidate does not create report until now!",null);
+         }
+           
+            
+        }else{
+            return "No user";
+            // return $this->generate_response(true,"No user found!",null);  
+        }
+           
+            
+             
+           
+           
+        } catch (\Illuminate\Database\QueryException $ex) {
+            $ex_msg =$ex->getMessage();
+            return $ex_msg;
+            // return $this->generate_response(false,$ex_msg,null,500);
+        
+        }
     }
 }
