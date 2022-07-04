@@ -99,6 +99,9 @@ class UserAuthController extends Controller
 			'phone' => 'required|unique:user',
 			'password' => 'required|string|max:40',
 			"apikey" => 'required',
+			'ssn' => 'required',
+			'last_name' => 'required',
+
 				]);
 
 			if($validator->fails()){
@@ -121,7 +124,11 @@ class UserAuthController extends Controller
 		DB::beginTransaction();
 		$code = rand ( 10000 , 99999 );//Str::random(5);
 		$user_id = uniqid();
+
 		$user=new User();
+		if($req->has('zipcode')){
+			$user->zip = $req->zipcode;
+		}
 		$user->baseUrlType = "New";
 		$user->userid = $user_id;
 		$user->phone=$req->phone;
@@ -510,10 +517,25 @@ class UserAuthController extends Controller
         	    $user->email = $email;
         	    // User::where('id', $user->id)->update(['email' => $email]);
         	}
+        	if($request->has('ssn')){
+        	    $ssn = $request->ssn;
+        	    $user->ssn = $ssn;
+        	    $params["ssn"] = $ssn;
+        	}
+        	if($request->has('zipcode')){
+        	    $zipcode = $request->zipcode;
+        	    $user->zip = $zipcode;
+        	    $params["zip"] = $zipcode;
+        	}
         	if($request->has('name')){
         	    $name = $request->name;
         	    $user->name = $name;
         	    $params["name"] = $name;
+        	}
+        	if($request->has('last_name')){
+        	    $name = $request->last_name;
+        	    $user->lastname = $name;
+        	    $params["lastname"] = $name;
         	}
 	
         	if($request->has('phone')){
