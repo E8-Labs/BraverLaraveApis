@@ -522,6 +522,18 @@ class UserAuthController extends Controller
         	    $user->ssn = $ssn;
         	    $params["ssn"] = $ssn;
         	}
+
+        	if($request->has('lat')){
+        	    $lat = $request->lat;
+        	    $user->lat = $lat;
+        	    $params["lat"] = $lat;
+        	}
+
+        	if($request->has('lang')){
+        	    $lang = $request->lang;
+        	    $user->lang = $lang;
+        	    $params["lang"] = $lang;
+        	}
         	if($request->has('zipcode')){
         	    $zipcode = $request->zipcode;
         	    $user->zip = $zipcode;

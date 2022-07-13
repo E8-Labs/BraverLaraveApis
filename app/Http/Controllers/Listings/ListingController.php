@@ -29,10 +29,7 @@ class ListingController extends Controller
 			'yachtname' => 'required',
 			'address' => 'required',
 			'yachtdescription' => 'required',
-			'url' => 'required',
-			'phone' => 'required',
-			'price' => 'required',
-			'userid' => 'required',
+// 			'userid' => 'required',
 			'type' => 'required',
 			"apikey" => 'required',
 				]);
@@ -40,7 +37,8 @@ class ListingController extends Controller
 			if($validator->fails()){
 				return response()->json(['status' => "0",
 					'message'=> 'validation error',
-					'data' => null, 
+					'data' => null,
+					'params' => $request->all(),
 					'validation_errors'=> $validator->errors()]);
 			}
 
@@ -55,15 +53,49 @@ class ListingController extends Controller
 		DB::beginTransaction();
 
 		$listing = new Listing();
-		$listing->addedby = $request->userid;
+// 		$listing->addedby = $request->userid;
+		if($request->has('userid')){
+			$listing->addedby = $request->userid;
+		}
+		else{
+			$listing->addedby = '';
+		}
 		$listing->yachtname = $request->yachtname;
-		$listing->yachtaddress = $request->address;
+		
 		$listing->dateadded = Carbon::now()->toDateTimeString();
 		$listing->yachtdescription = $request->yachtdescription;
-		$listing->yachtweburl = $request->url;
-		$listing->yachtphone = $request->phone;
-		$listing->yachtprice = $request->price;
+		
+		
+		
 		$listing->type = $request->type;
+
+
+		if($request->has('address')){
+			$listing->yachtaddress = $request->address;
+		}
+		else{
+			$listing->yachtaddress = '';
+		}
+
+		if($request->has('url')){
+			$listing->yachtweburl = $request->url;
+		}
+		else{
+			$listing->yachtweburl = '';
+		}
+
+		if($request->has('price')){
+			$listing->yachtprice = $request->price;
+		}
+		else{
+			$listing->yachtprice = '';
+		}
+		if($request->has('phone')){
+			$listing->yachtphone = $request->phone;
+		}
+		else{
+			$listing->yachtphone = '';
+		}
 		if($request->has('eventdate')){
 			$listing->eventdate = $request->eventdate;
 		}
@@ -94,25 +126,37 @@ class ListingController extends Controller
 		if($request->has('instaurl')){
 			$listing->instaurl = $request->instaurl;
 		}
+		else{
+		    $listing->instaurl = '';
+		}
 		if($request->has('fulldayprice')){
 			$listing->price_full_day = $request->fulldayprice;
+		}
+		else{
+		    $listing->price_full_day = '';
 		}
 		if($request->has('lat')){
 			$listing->lat = $request->lat;
 		}
+		else{
+		  //  $listing->lat = 0;
+		}
 		if($request->has('lang')){
 			$listing->lang = $request->lang;
+		}
+		else{
+		  //  $listing->lang = 0;
 		}
 
 		if($request->hasFile('seatingimage')){
 
-			$ima = $req->seatingimage;
-			$data=$req->file('seatingimage')->store('Images');
+			$ima = $request->seatingimage;
+			$data=$request->file('seatingimage')->store('Images');
    			$listing->seatingimage = $data;
 		}
-		else if ($req->has('seatingimage')){
+		else if ($request->has('seatingimage')){
 			// base64 image
-			$url = $this->saveBase64Iamge($req->seatingimage, "/braver/storage/app/Images/");
+			$url = $this->saveBase64Iamge($request->seatingimage, "/braver/storage/app/Images/");
 			// $result = $this->saveImage($url, $listing_id, "", "Image");
 			$listing->seatingimage = $url;
 		}
