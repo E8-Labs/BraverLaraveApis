@@ -48,7 +48,7 @@ Route::post("addcard",[PaymentController::class,'addCard']);
 Route::post("cardlist",[PaymentController::class,'cardList']);
 
 Route::post("addyacht",[ListingController::class,'addListing']);
-Route::get("deleteyacht",[ListingController::class,'deleteListing']);
+Route::post("deleteyacht",[ListingController::class,'deleteListing']);
 Route::post("edityacht",[EditListingController::class,'editListing']);
 Route::get("listyachts",[ListingController::class,'getListings']);
 Route::get("getyachtbyid",[ListingController::class,'getListingById']);

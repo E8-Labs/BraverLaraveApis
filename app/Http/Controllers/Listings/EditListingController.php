@@ -53,20 +53,20 @@ class EditListingController extends Controller
 		}
 
 		if($request->has('address')){
-			$listing->address = $request->address;
+			$listing->yachtaddress = $request->address;
 		}
 
 		if($request->has('yachtdescription')){
 			$listing->yachtdescription = $request->yachtdescription;
 		}
 		if($request->has('phone')){
-			$listing->phone = $request->phone;
+			$listing->yachtphone = $request->phone;
 		}
 		if($request->has('url')){
 			$listing->url = $request->url;
 		}
 		if($request->has('price')){
-			$listing->price = $request->price;
+			$listing->yachtprice = $request->price;
 		}
 		if($request->has('eventdate')){
 			$listing->eventdate = $request->eventdate;
