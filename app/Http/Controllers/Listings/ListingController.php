@@ -582,25 +582,39 @@ class ListingController extends Controller
 				]);
 			}
 			$id = $request->yachtid;
-			try{
-
+			$yacht = Listing::where('yachtid', $id)->first();
+			if($yacht){
+			    try{
+                    $done = Listing::where('yachtid', $id)->update(['featured' => 1]);
+				    if($done){
+				    	$listing = Listing::where('yachtid', $id)->first();
+				    	return response()->json(['status' => "1",
+				    		'message'=> 'Listing featured',
+				    		'data' => new ListingResource($listing), 
+				    	]);
+				    }
+				    else{
+				    	return response()->json(['status' => "0",
+				    		'message'=> 'Some problem on server',
+				    		'data' => null, 
+				    	]);
+				    }
+			    }
+			    catch(\Exception $e){
+			    	return response()->json(['status' => "0",
+			    			'message'=> 'Some error occurred',
+			    			'error' => $e->getMessage(),
+			    			'data' => null, 
+			    		]);
+			    }
 			}
-			catch(\Exception $e){
-				$done = Listing::where('yachtid', $id)->update(['featured' => 1]);
-				if($done){
-					$listing = Listing::where('yachtid', $id)->first();
-					return response()->json(['status' => "1",
-						'message'=> 'Listing featured',
-						'data' => new ListingResource($listing), 
-					]);
-				}
-				else{
-					return response()->json(['status' => "0",
-						'message'=> 'Some problem on server',
-						'data' => null, 
-					]);
-				}
+			else{
+			    return response()->json(['status' => "0",
+			    			'message'=> 'No such yacht',
+			    			'data' => null, 
+			    		]);
 			}
+			
 
     }
 
