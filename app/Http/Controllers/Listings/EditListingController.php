@@ -99,34 +99,44 @@ class EditListingController extends Controller
 
 		$images = array();//$decoded['images'];
 
+    $index = 0;
 		for($i = 0; $i < 8; $i++){
 		    if($request->has('image'. $i)){
 		        if($i == 0){
-		        	$images[$i] = $request->image0;
+		        	$images[$index] = $request->image0;
+		        	$index += 1;
 		        }
 		        if($i == 1){
-		        	$images[$i] = $request->image1;
+		        	$images[$index] = $request->image1;
+		        	$index += 1;
 		        }
 		        if($i == 2){
-		        	$images[$i] = $request->image2;
+		        	$images[$index] = $request->image2;
+		        	$index += 1;
 		        }
 		        if($i == 3){
-		        	$images[$i] = $request->image3;
+		        	$images[$index] = $request->image3;
+		        	$index += 1;
 		        }
 		        if($i == 4){
-		        	$images[$i] = $request->image4;
+		        	$images[$index] = $request->image4;
+		        	$index += 1;
 		        }
 		        if($i == 5){
-		        	$images[$i] = $request->image5;
+		        	$images[$index] = $request->image5;
+		        	$index += 1;
 		        }
 		        if($i == 6){
-		        	$images[$i] = $request->image6;
+		        	$images[$index] = $request->image6;
+		        	$index += 1;
 		        }
 		        if($i == 7){
-		        	$images[$i] = $request->image7;
+		        	$images[$index] = $request->image7;
+		        	$index += 1;
 		        }
 		    }
 		}
+// 		return $images;
 		for($i = 0; $i < count($images); $i++){
 		    $b64image = $images[$i];
 		    if(strpos($b64image, "Delete_") !== false){
@@ -150,7 +160,7 @@ class EditListingController extends Controller
     		else{
     			//new image
     			$url = $this->saveBase64Iamge($b64image, "/braver/storage/app/Images/");
-    			$this->saveImage($data, $request->yachtid, "", "Image");
+    			$this->saveImage($url, $request->yachtid, "", "Image");
     		}
 		}
 
