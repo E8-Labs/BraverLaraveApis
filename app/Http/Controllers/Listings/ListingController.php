@@ -27,7 +27,7 @@ class ListingController extends Controller
 	function addListing(Request $request){
 		$validator = Validator::make($request->all(), [
 			'yachtname' => 'required',
-			'address' => 'required',
+// 			'address' => 'required',
 			'yachtdescription' => 'required',
 // 			'userid' => 'required',
 			'type' => 'required',
@@ -50,7 +50,8 @@ class ListingController extends Controller
 				]);
 			}
 				
-		DB::beginTransaction();
+		try{
+		    DB::beginTransaction();
 
 		$listing = new Listing();
 // 		$listing->addedby = $request->userid;
@@ -71,7 +72,11 @@ class ListingController extends Controller
 
 
 		if($request->has('address')){
+		    
 			$listing->yachtaddress = $request->address;
+			if($request->address == NULL){
+			    $listing->yachtaddress = '';
+			}
 		}
 		else{
 			$listing->yachtaddress = '';
@@ -79,6 +84,9 @@ class ListingController extends Controller
 
 		if($request->has('url')){
 			$listing->yachtweburl = $request->url;
+			if($request->url == NULL){
+			    $listing->yachtweburl = '';
+			}
 		}
 		else{
 			$listing->yachtweburl = '';
@@ -86,12 +94,18 @@ class ListingController extends Controller
 
 		if($request->has('price')){
 			$listing->yachtprice = $request->price;
+			if($request->price == NULL){
+			    $listing->yachtprice = '';
+			}
 		}
 		else{
 			$listing->yachtprice = '';
 		}
 		if($request->has('phone')){
 			$listing->yachtphone = $request->phone;
+			if($request->phone == NULL){
+			    $listing->yachtphone = '';
+			}
 		}
 		else{
 			$listing->yachtphone = '';
@@ -125,12 +139,18 @@ class ListingController extends Controller
 
 		if($request->has('instaurl')){
 			$listing->instaurl = $request->instaurl;
+			if($request->instaurl == NULL){
+			    $listing->instaurl = '';
+			}
 		}
 		else{
 		    $listing->instaurl = '';
 		}
 		if($request->has('fulldayprice')){
 			$listing->price_full_day = $request->fulldayprice;
+			if($request->fulldayprice == NULL){
+			    $listing->price_full_day = '';
+			}
 		}
 		else{
 		    $listing->price_full_day = '';
@@ -198,6 +218,15 @@ class ListingController extends Controller
 				]);
 
 			}
+		}
+		catch(\Exception $e){
+		    return response()->json(['status' => false,
+					'message'=> 'Listing  not added',
+					'error' => $e->getMessage(),
+					'data'=> null,
+
+				]);
+		}
 	}
 
 
@@ -492,6 +521,45 @@ class ListingController extends Controller
 
     }
 
+    function deleteListing(Request $request){
+
+    	$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+			"yachtid" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			$id = $request->yachtid;
+			$done = Listing::where('yachtid', $id)->update(['deleted' => 1]);
+			if($done){
+				
+				return response()->json(['status' => "1",
+					'message'=> 'Listing deleted',
+					'data' => null, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Some problem on server',
+					'data' => null, 
+				]);
+			}
+
+    }
+
 
     function featuretListing(Request $request){
 
@@ -513,7 +581,7 @@ class ListingController extends Controller
 					'data' => null, 
 				]);
 			}
-
+			$id = $request->yachtid;
 			$done = Listing::where('yachtid', $id)->update(['featured' => 1]);
 			if($done){
 				$listing = Listing::where('yachtid', $id)->first();
