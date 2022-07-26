@@ -121,7 +121,8 @@ class UserAuthController extends Controller
 			
 			
 				
-		DB::beginTransaction();
+		try{
+		    DB::beginTransaction();
 		$code = rand ( 10000 , 99999 );//Str::random(5);
 		$user_id = uniqid();
 
@@ -151,6 +152,7 @@ class UserAuthController extends Controller
 		// $user->stripecustomerid = "";
 		$user->invitedbycode = $req->invitecode;
 		$user->gender = $req->gender;
+		
 		if($req->has('image')){
 			$ima = $req->image;
 			$fileName =  rand(). date("h:i:s").'image.png';
@@ -174,8 +176,21 @@ class UserAuthController extends Controller
    			$user->url = "/braver/storage/app/Images/". $fileName;
 
 		}
+		
 		$user->password=Hash::make($req->password);
-		$result=$user->save();
+		
+		try{
+		    $result=$user->save();
+		}
+		catch(\Exception $ex){
+		    \Log::info($ex);
+		    return response()->json(['status' => "0",
+					'message'=> 'user not saved exception',
+					'data' => null, 
+					'error' => $ex,
+				]);
+		}
+		
 		// $token = JWTAuth::fromUser($user);
 		
 		// $user_id = $user->id;
@@ -185,41 +200,13 @@ class UserAuthController extends Controller
 			DB::commit();
 			$profile = User::where('userid', $user_id)->first();
 			$user = $profile;
-			// $dob = '';
-   //                      $chekr_error = null;
-   //                      if($user->dob){
-   //                          // return ["date" => "". $user->dob];
-   //                          $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
-                            
-   //                          $data = [
-			//         	        "first_name" => $user->name,
-			//         	        "last_name" => $user->name,
-			//         	        "phone" => $user->phone,
-			//         	        "email" => $user->email,
-			//         	        "dob" => $dob,
-			//         	        "ssn" => $user->ssn,
-			//         	        "zipcode"=>$user->zip,
-			//         	    ];
-			        	    
-			//         	    $json = $this->createCheckrCandidate($data);
-			        	    
-			//         	    if(array_key_exists('id', $json)){
-			        	        
-			//         	    	User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
-			//         	    }
-			//         	    else{
-	  //                           $chekr_error = $json['error'];
-			//         	    }
-   //                      }
-   //                      else{
-                            
-   //                      }
+
 			
-			return response()->json([
-					'message' => 'User registered',
-					'status' => "1",
-					'data' => new UserProfileFullResource($profile),
-			]);
+			   return response()->json([
+			   		'message' => 'User registered',
+			   		'status' => "1",
+			   		'data' => new UserProfileFullResource($profile),
+			   ]);
 		    }
 		else
 			{
@@ -231,6 +218,22 @@ class UserAuthController extends Controller
 					
 				]);
 			}
+		}
+		catch(\Exception $e){
+		    DB::rollBack();
+		    \Log::info('----------------------------------------');
+			\Log::info($e);
+			\Log::info('----------------------------------------');
+			\Log::info('----------------------------------------');
+			\Log::info('----------------------------------------');
+			return response()->json([
+					'message' => 'User not registered: Exception',
+					'status' => false,
+					'data' => null,
+					'exception' => $e,
+					'errorString' => $e->getMessage(),
+				]);
+		}
 		 
 		}
 
