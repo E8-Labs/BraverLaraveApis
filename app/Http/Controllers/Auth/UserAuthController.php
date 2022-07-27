@@ -96,7 +96,7 @@ class UserAuthController extends Controller
 			
 			$validator = Validator::make($req->all(), [
 			'email' => 'required|string|email|max:255|unique:user',
-			'phone' => 'required|unique:user',
+			// 'phone' => 'required|unique:user',
 			'password' => 'required|string|max:40',
 			"apikey" => 'required',
 			'ssn' => 'required',
@@ -119,6 +119,13 @@ class UserAuthController extends Controller
 				]);
 			}
 			
+			$user = User::where('phone', $req->phone)->first();
+			if($user){
+				return response()->json(['status' => "0",
+					'message'=> 'Phone already taken',
+					'data' => null, 
+				]);
+			}
 			
 				
 		try{
@@ -622,6 +629,42 @@ class UserAuthController extends Controller
 			else{
 				return response()->json(['status' => "1",
 					'message'=> 'Email available',
+					'data' => null, 
+				]);
+			}
+        }
+
+        function checkPhoneExists(Request $request){
+        	$validator = Validator::make($request->all(), [
+			'phone' => 'required',
+			"apikey" => 'required',
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+			$user = User::where('phone', $request->phone)->first();
+			if($user){
+				return response()->json(['status' => "0",
+					'message'=> 'Phone already taken',
+					'data' => null, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "1",
+					'message'=> 'Phone available',
 					'data' => null, 
 				]);
 			}

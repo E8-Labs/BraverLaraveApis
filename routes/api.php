@@ -37,6 +37,7 @@ Route::post('reset-password', [AuthForgotPasswordController::class, 'submitReset
 
 
 Route::post("checkemail",[UserAuthController::class,'checkEmailExists']);
+Route::post("checkphone",[UserAuthController::class,'checkPhoneExists']);
 Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);
 Route::post("deleteuser",[UserController::class,'deleteUser']);
