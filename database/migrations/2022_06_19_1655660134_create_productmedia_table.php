@@ -15,10 +15,12 @@ class CreateProductmediaTable extends Migration
 		$table->string('mediatype',100);
 		$table->string('mediaurl',100);
 		$table->string('productid',100);
+		$table->double('height')->default(0);
+		$table->double('width')->default(0);
 		$table->timestamp('dateadded')->useCurrent();
-		;
-		;
-		$table->integer('sorter',11);
+		$table->string('baseUrl',10)->default('Old');
+		
+		$table->integer('sorter',11)->default(0);
 
         });
     }

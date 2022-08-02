@@ -682,7 +682,9 @@ class ChatController extends Controller
 	private function saveChatUsers($users, $chat, $fromUser, $chatforproduct, $lastmessage){
 		foreach($users as $user){
 			$cu = new ChatUser();
-			
+			\Log::info('-------------------Saving chat users---------------');
+			\Log::info($chat);
+			\Log::info('-------------------Saving chat users---------------');
 
 			$userid = $user["userid"];
 			$cu->userid = $userid;
