@@ -316,19 +316,22 @@ class ChatController extends Controller
 			}
 
 			$off_set = $page * $ListSize - $ListSize;
-
-			$chats = ChatThread::when($request->has('chatforproduct'), function($query, $request){
-				$query->where('chatforproduct', $request->chatforproduct);
+            $chatforproduct = $request->chatforproduct;
+            $chattype = $request->chattype;
+            $userid = $request->userid;
+            $status = $request->status;
+            // return $chatforproduct;
+            $chatids = ChatUser::where('userid', $userid)->pluck('chatid')->toArray();
+			$chats = ChatThread::whereIn('chatid', $chatids)
+			->when($request->has('chatforproduct'), function($query) use ($chatforproduct){
+			 //   return $chatforproduct;
+				return $query->where('chatforproduct', $chatforproduct);
 			})
-			->when($request->has('chattype'), function($query, $request){
-				$query->where('chattype', $request->chattype);
+			->when($request->has('chattype'), function($query) use ($chattype){
+				$query->where('chattype', $chattype);
 			})
-			->when($request->has('userid'), function($query, $request){
-				$chatids = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
-				$query->whereIn('chatid', $chatids);
-			})
-			->when($request->has('status'), function($query, $request){
-				$status = $request->status;
+			->when($request->has('status'), function($query) use ($status){
+				// $status = $request->status;
 				if($status == "Paid"){
 					//chatid in (Select chatid from yachtreservations where reservationstatus = 'Reserved' OR reservationstatus = 'Cancelled')
 					$chatids = Reservation::where('reservationstatus', ReservationStatus::StatusReserved)

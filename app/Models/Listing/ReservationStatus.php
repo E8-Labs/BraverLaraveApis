@@ -10,7 +10,7 @@ class ReservationStatus extends Model
     use HasFactory;
     const StatusReserved = "Reserved";
     const StatusPendingPayment = "PendingPayment";
-    const StatusCancedlled = "Cancelled";
+    const StatusCancelled = "Cancelled";
     const StatusRefunded = "Refunded";
     const StatusPendingRefund = "PendingRefund";
 }
