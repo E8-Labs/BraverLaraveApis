@@ -10,4 +10,5 @@ class Card extends Model
     use HasFactory;
     protected $table = 'usercard';
     public $timestamps = false;
+    // this is changed today
 }
