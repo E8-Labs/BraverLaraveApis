@@ -18,6 +18,15 @@ class ListingResource extends JsonResource
     {
 
         $images = ListingImage::where('productid', $this->yachtid)->get();
+
+        $seating = $this->seatingimage;
+        $env = env('APP_DEBUG');
+        if($env == true){ // debug mode
+                $image = \Config::get('constants.item_images_debug') . $image;
+            }
+            else{
+                $image = \Config::get('constants.item_images') . $image;
+            }
         return [
             "yachtid"=> $this->yachtid,
             "yachtname"=> $this->yachtname,
