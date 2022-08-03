@@ -424,7 +424,7 @@ class ChatController extends Controller
 	function updateChat(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
-			"userid" => 'required',
+			// "userid" => 'required',
 			"chatid" => 'required',
 
 				]);
@@ -449,8 +449,27 @@ class ChatController extends Controller
 			if($request->has('updateother')){
 				$updateother = $request->updateother;
 			}
+			$fromid = '';
+			if($request->has('userid')){
+				$fromid = $request->userid;
+			}
+			else if($request->has('fromid')){
+				$fromid = $request->fromid;
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'userid or fromid parameter required',
+					'data' => null, 
+				]);
+			}
 
-			$fromid = $request->userid;
+			if($fromid == ''){
+				return response()->json(['status' => "0",
+					'message'=> 'userid or fromid can not be empty',
+					'data' => null, 
+				]);
+			}
+			
 			$chatid = $request->chatid;
 			$chat = ChatThread::where('chatid', $chatid)->first();
 
