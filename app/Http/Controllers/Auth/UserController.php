@@ -109,9 +109,16 @@ class UserController extends Controller
 					'data' => null, 
 				]);
 			}
-
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->delete();
-			if($user){
+			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+            if($user->role == 'ADMIN'){
+				return response()->json(['status' => "0",
+					'message'=> 'can not delete admin user ' . $request->userid,
+					'data' => $user, 
+				]);
+			}
+			$deleted = User::where('userid', $request->userid)->orWhere('id', $request->userid)->delete();
+			
+			if($deleted){
 				return response()->json(['status' => "1",
 					'message'=> 'User deleted',
 					'data' => $user, 
@@ -119,7 +126,7 @@ class UserController extends Controller
 			}
 			else{
 				return response()->json(['status' => "0",
-					'message'=> 'Error deleting user',
+					'message'=> 'Error deleting user' . $request->userid,
 					'data' => null, 
 				]);
 			}
@@ -146,7 +153,8 @@ class UserController extends Controller
 				]);
 			}
 
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->update(['accountstatus'=> AccountStatus::Approved]);
+			try{
+			    $user = User::where('userid', $request->userid)->update(['accountstatus'=> AccountStatus::Approved]);
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User approved',
@@ -156,6 +164,18 @@ class UserController extends Controller
 			else{
 				return response()->json(['status' => "0",
 					'message'=> 'Error approving user',
+					'data' => null, 
+				]);
+			}
+			}
+			catch(\Exception $e){
+			    \Log::info('---------------- Exception approving  start----------------------');
+			    
+			    \Log::info($e);
+			    \Log::info('---------------- Exception approving End ----------------------');
+			    
+			    return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
 					'data' => null, 
 				]);
 			}

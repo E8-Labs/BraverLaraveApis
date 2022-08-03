@@ -69,7 +69,7 @@ class ChatController extends Controller
 
 
 
-			$user = User::where('userid', $request->fromuser)->orWhere('id', $request->fromuser)->first();
+			$user = User::where('userid', $request->fromuser)->first();
 
 			$yachtid = $request->productid;
 
@@ -444,7 +444,8 @@ class ChatController extends Controller
 				]);
 			}
 
-			$updateother = "0";
+			try{
+			    $updateother = "0";
 			if($request->has('updateother')){
 				$updateother = $request->updateother;
 			}
@@ -474,7 +475,7 @@ class ChatController extends Controller
 
 			$chatUsers = $chat->getChatUsers();
 
-			$fromuser = User::where('userid', $request->userid)->orWhere('id', $fromid)->first();
+			$fromuser = User::where('userid', $request->userid)->first();
             $fromname = $fromuser->name;
 			foreach($chatUsers as $cu){
 
@@ -538,6 +539,17 @@ class ChatController extends Controller
 					'message'=> 'Chat updated',
 					'data' => new ChatResource($chat), 
 				]);
+			}
+			catch(\Exception $e){
+			    \Log::info('--------------Chat Update Exception------------------');
+			    
+			    \Log::info($e);
+			    \Log::info('--------------------------------');
+			    return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
+					'data' => new ChatResource($chat), 
+				]);
+			}
 
 	}
 
@@ -662,17 +674,29 @@ class ChatController extends Controller
 			}
 			$off_set = $page * $Size - $Size;
 
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
+// 			return $user;
+
+// $sql = "Select * from chat c where c.fromuserid = '$userid' AND c.chatid in (Select r.chatid from  yachtreservations r where r.reservationstatus = 'Reserved');";//where r.reservationstatus = 'Reserved'
+//         $user = loadUser($conn, $userid);
+//         $role = $user["role"];
+//         if($role === "ADMIN"){
+//             $sql = "Select * from chat c where c.chatid in (Select r.chatid from  yachtreservations r);";
+//         }
+//         else if ($role === "TEAM"){
+//             $sql = "Select * from chat c where c.chatid in ( Select cu.chatid from chatusers cu where cu.userid = '$userid')";
+//         }
 			$reserved = Reservation::where('reservationstatus', ReservationStatus::StatusReserved)->pluck('chatid')->toArray();
 			$requests = ChatThread::where('fromuserid', $request->userid)->whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
-			return $requests;
+// 			return $requests;
 			if($user->role == "ADMIN"){
 				$reserved = Reservation::pluck('chatid')->toArray();
-				$requests = ChatThread::where('fromuserid', $request->userid)->whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
+				// return $reserved;
+				$requests = ChatThread::whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
 			}
 			else if ($user->role == "TEAM"){
 				$reserved = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
-				$requests = ChatThread::where('fromuserid', $request->userid)->whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
+				$requests = ChatThread::whereIn('chatid', $reserved)->skip($off_set)->take($Size)->get();
 			}
 
 			return response()->json(['status' => "1",
@@ -698,7 +722,7 @@ class ChatController extends Controller
                 $unread = 0;
                 if ($role === 'Admin'){
                     $unread = 1;
-                    $u = User::where('userid', $userid)->orWhere('id', $userid)->first();
+                    $u = User::where('userid', $userid)->first();
                     $fcm = $u->fcmtoken;
                     
                     $data = array();
