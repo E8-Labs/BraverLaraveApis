@@ -16,11 +16,20 @@ class ListingImageResource extends JsonResource
     {
 
         $image = $this->mediaurl;
+        $env = env('APP_DEBUG');
+        
+        
         if($this->baseUrl == "Old"){
             $image = \Config::get('constants.item_images_old') . $image;
         }
         else{
-            $image = \Config::get('constants.item_images') . $image;
+            
+            if($env == true){
+                $image = \Config::get('constants.item_images_debug') . $image;
+            }
+            else{
+                $image = \Config::get('constants.item_images') . $image;
+            }
         }
 
         return [
