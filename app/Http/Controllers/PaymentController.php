@@ -218,7 +218,7 @@ class PaymentController extends Controller
 				]);
 			}
 			$userid = $request->userid;
-			$user = User::where('userid', $userid)->orWhere('id', $userid)->first();
+			$user = User::where('userid', $userid)->first();
 			if($user == NULL){
 				return response()->json(['status' => "0",
 					'message'=> 'No such user',
@@ -232,7 +232,8 @@ class PaymentController extends Controller
 				]);
 
 			}
-			$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+			try{
+			    $stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
 
 
 			$page = 1;
@@ -289,6 +290,46 @@ class PaymentController extends Controller
 						'message'=> 'Card list ',
 						'data' => $rows, 
 					]);
+			}
+					
+					
+					catch(\Stripe\Exception\CardException $e) {
+			   $error= $e->getError()->message;
+			     return response()->json(['status' => "0",
+						'message'=>  $error,
+						'data' => null, 
+					]);
+			} catch (\Stripe\Exception\RateLimitException $e) {
+			  $error= $e->getError()->message;
+			     return response()->json(['status' => "0",
+						'message'=> $error,
+						'data' => null, 
+					]);
+			} catch (\Stripe\Exception\InvalidRequestException $e) {
+			   $error= $e->getError()->message;
+			     return response()->json(['status' => "0",
+						'message'=>  $error,
+						'data' => null, 
+					]);
+			} catch (\Stripe\Exception\AuthenticationException $e) {
+			   $error= $e->getError()->message;
+			     return response()->json(['status' => "0",
+						'message'=>  $error,
+						'data' => null, 
+					]);
+			} catch (\Stripe\Exception\ApiConnectionException $e) {
+			   $error= $e->getError()->message;
+			     return response()->json(['status' => "0",
+						'message'=> $error,
+						'data' => null, 
+					]);
+			} catch (\Stripe\Exception\ApiErrorException $e) {
+			   $error= $e->getError()->message;
+			     return response()->json(['status' => "0",
+						'message'=> $error,
+						'data' => null, 
+					]);
+			} 
 
 	}
 
