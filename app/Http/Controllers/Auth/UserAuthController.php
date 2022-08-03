@@ -161,6 +161,11 @@ class UserAuthController extends Controller
 		$user->gender = $req->gender;
 		
 		if($req->has('image')){
+			$env = env('APP_DEBUG');
+			$folder = 'braver';
+			if($env == true){
+				$folder = 'braver_testing';
+			}
 			$ima = $req->image;
 			$fileName =  rand(). date("h:i:s").'image.png';
 
@@ -173,14 +178,14 @@ class UserAuthController extends Controller
 		
     		$imageData = base64_decode($ima);
     		//Set image whole path here 
-    		$filePath = $_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/". $fileName;
+    		$filePath = $_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/". $fileName;
 
 // return $filePath;
-            if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/")){
-                Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/");
+            if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/" . $folder ."/storage/app/Images/")){
+                Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/");
             }
    			file_put_contents($filePath, $imageData);
-   			$user->url = "/braver/storage/app/Images/". $fileName;
+   			$user->url = "/". $folder. "/storage/app/Images/". $fileName;
 
 		}
 		
@@ -486,10 +491,15 @@ class UserAuthController extends Controller
             
 
 
-        	if($request->hasFile('image'))
+        	if($request->has('image'))
         	{
         	    $ima = $request->image;
 				$fileName =  rand(). date("h:i:s").'image.png';
+				$env = env('APP_DEBUG');
+				$folder = 'braver';
+				if($env == true){
+					$folder = 'braver_testing';
+				}
 	
     			$ima = trim($ima);
     			$ima = str_replace('data:image/png;base64,', '', $ima);

@@ -18,6 +18,15 @@ class ListingResource extends JsonResource
     {
 
         $images = ListingImage::where('productid', $this->yachtid)->get();
+
+        $image = $this->seatingimage;
+        $env = env('APP_DEBUG');
+        if($env == true){ // debug mode
+                $image = \Config::get('constants.item_images_debug') . $image;
+            }
+            else{
+                $image = \Config::get('constants.item_images') . $image;
+            }
         return [
             "yachtid"=> $this->yachtid,
             "yachtname"=> $this->yachtname,
@@ -32,7 +41,7 @@ class ListingResource extends JsonResource
             "featured"=> $this->featured,
             "deleted"=> $this->deleted,
             "type"=> $this->type,
-            "seatingimage"=> $this->seatingimage,
+            "seatingimage"=> $image,
             "instaurl"=> $this->instaurl,
             "eventdate"=> $this->eventdate,
             "eventtime"=> $this->eventtime,
