@@ -494,7 +494,7 @@ class ChatController extends Controller
 
 			$chatUsers = $chat->getChatUsers();
 
-			$fromuser = User::where('userid', $request->userid)->first();
+			$fromuser = User::where('userid', $fromid)->first();
             $fromname = $fromuser->name;
 			foreach($chatUsers as $cu){
 
