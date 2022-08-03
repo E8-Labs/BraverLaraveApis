@@ -178,7 +178,7 @@ class UserAuthController extends Controller
 		
     		$imageData = base64_decode($ima);
     		//Set image whole path here 
-    		$filePath = $_SERVER['DOCUMENT_ROOT']."/braver/storage/app/Images/". $fileName;
+    		$filePath = $_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/". $fileName;
 
 // return $filePath;
             if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/" . $folder ."/storage/app/Images/")){
