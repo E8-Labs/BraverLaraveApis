@@ -70,7 +70,7 @@ class EditListingController extends Controller
 			$listing->yachtphone = $request->phone;
 		}
 		if($request->has('url')){
-			$listing->url = $request->url;
+			$listing->yachtweburl = $request->url;
 		}
 		if($request->has('price')){
 			$listing->yachtprice = $request->price;
