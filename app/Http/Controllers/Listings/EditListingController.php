@@ -174,9 +174,10 @@ class EditListingController extends Controller
 		$saved = $listing->save();
 		if($saved){
 			DB::commit();
+			$yacht = Listing::where('yachtid', $request->yachtid)->first();
 			return response()->json(['status' => "1",
 					'message'=> 'Edited listing',
-					'data' => new ListingResource($listing), 
+					'data' => new ListingResource($yacht), 
 				]);
 		}
 		else{
