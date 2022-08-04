@@ -43,7 +43,14 @@ class EditListingController extends Controller
 					'data' => null, 
 				]);
 			}
-				
+		
+		try{	
+
+		$env = env('APP_DEBUG');
+			$folder = 'braver';
+			if($env == true){
+				$folder = 'braver_testing';
+			}	
 		DB::beginTransaction();
 		$listing = Listing::where('yachtid', $request->yachtid)->first();
 
@@ -63,7 +70,7 @@ class EditListingController extends Controller
 			$listing->yachtphone = $request->phone;
 		}
 		if($request->has('url')){
-			$listing->url = $request->url;
+			$listing->yachtweburl = $request->url;
 		}
 		if($request->has('price')){
 			$listing->yachtprice = $request->price;
@@ -92,7 +99,7 @@ class EditListingController extends Controller
 		}
 		else if ($request->has('seatingimage')){
 			// base64 image
-			$url = $this->saveBase64Iamge($request->seatingimage, "/braver/storage/app/Images/");
+			$url = $this->saveBase64Iamge($request->seatingimage, "/".$folder."/storage/app/Images/");
 			// $result = $this->saveImage($url, $listing_id, "", "Image");
 			$listing->seatingimage = $url;
 		}
@@ -153,13 +160,13 @@ class EditListingController extends Controller
     			        $id = $tok[1];
     			        $newimage = str_replace($first."_".$id."_","",$b64image);
     			        $b64image = $newimage;
-    			        $url = $this->saveBase64Iamge($b64image, "/braver/storage/app/Images/");
+    			        $url = $this->saveBase64Iamge($b64image, "/".$folder."/storage/app/Images/");
 						ListingImage::where('mediaid', $id)->update(['mediaurl' => $url, 'baseUrl' => 'New']);
     			    }
     		}
     		else{
     			//new image
-    			$url = $this->saveBase64Iamge($b64image, "/braver/storage/app/Images/");
+    			$url = $this->saveBase64Iamge($b64image, "/".$folder."/storage/app/Images/");
     			$this->saveImage($url, $request->yachtid, "", "Image");
     		}
 		}
@@ -167,15 +174,27 @@ class EditListingController extends Controller
 		$saved = $listing->save();
 		if($saved){
 			DB::commit();
+			$yacht = Listing::where('yachtid', $request->yachtid)->first();
 			return response()->json(['status' => "1",
 					'message'=> 'Edited listing',
-					'data' => new ListingResource($listing), 
+					'data' => new ListingResource($yacht), 
 				]);
 		}
 		else{
 			DB::rollBack();
 			return response()->json(['status' => "0",
 					'message'=> 'Could not edit listing',
+					'data' => null, 
+				]);
+		}
+		}
+		catch(\Exception $e){
+		    DB::rollBack();
+		    \Log::info('----------------Exception editing start------------------');
+		    \Log::info($e);
+		    \Log::info('----------------Exception editing end------------------');
+			return response()->json(['status' => "0",
+					'message'=> 'Error editing : Exception',
 					'data' => null, 
 				]);
 		}
