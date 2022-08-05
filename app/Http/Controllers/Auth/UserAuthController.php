@@ -513,7 +513,8 @@ class UserAuthController extends Controller
     			$filePath = $_SERVER['DOCUMENT_ROOT']."/". $fileName;
 	
    				file_put_contents($filePath, $imageData);
-   				$user->url = $filePath;
+   				// $user->url = $filePath;
+   				$user->url = "/". $folder. "/storage/app/Images/". $fileName;
    				$user->save();
         	    
         	}
@@ -597,7 +598,7 @@ class UserAuthController extends Controller
         	if($saved){
         		return response()->json(['status' => "1",
 					'message'=> 'User Updated',
-					'data' => $user, 
+					'data' => new UserProfileFullResource($user), 
 				]);
         	}
         	else{
