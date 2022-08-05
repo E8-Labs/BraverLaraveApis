@@ -510,10 +510,19 @@ class UserAuthController extends Controller
 			
     			$imageData = base64_decode($ima);
     			//Set image whole path here 
-    			$filePath = $_SERVER['DOCUMENT_ROOT']."/". $fileName;
+    			// $filePath = $_SERVER['DOCUMENT_ROOT']."/". $fileName;
 	
-   				file_put_contents($filePath, $imageData);
+   				// file_put_contents($filePath, $imageData);
    				// $user->url = $filePath;
+
+
+   				$filePath = $_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/". $fileName;
+
+				// return $filePath;
+            	if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/" . $folder ."/storage/app/Images/")){
+                	Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/");
+            	}
+   				file_put_contents($filePath, $imageData);
    				$user->url = "/". $folder. "/storage/app/Images/". $fileName;
    				$user->save();
         	    
