@@ -65,7 +65,7 @@ class EditListingController extends Controller
 
 		if($request->has('yachtdescription')){
 			$des = $request->yachtdescription;
-			if($des == null){
+			if($des == null || $des == ''){
 				return response()->json(['status' => "0",
 					'message'=> 'Yacht description can not be empty',
 					'data' => null, 
