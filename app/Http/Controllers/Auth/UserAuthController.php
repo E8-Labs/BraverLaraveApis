@@ -524,6 +524,7 @@ class UserAuthController extends Controller
             	}
    				file_put_contents($filePath, $imageData);
    				$user->url = "/". $folder. "/storage/app/Images/". $fileName;
+   				$user->baseUrlType = 'New';
    				$user->save();
         	    
         	}
