@@ -420,12 +420,15 @@ class ListingController extends Controller
 				$type = $request->type;
 			}
 
+			$featured = Listing::where('deleted', 0)->where('featured', 1)->where('type', $type)->take(1)->get();
+
 			$page = 1;
 			if($request->has('page')){
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
 			$users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->take(50)->skip($off_set)->get();
+			$users = array_merge($featured, $users);
 			if($request->has('search')){
 				$search = $request->search;
 
@@ -596,15 +599,20 @@ class ListingController extends Controller
 			$yacht = Listing::where('yachtid', $id)->first();
 			if($yacht){
 			    try{
+			    	DB::beginTransaction();
+			    	$removeFeatured = Listing::where('type', $yacht->type)->update(['featured' => 0]);
                     $done = Listing::where('yachtid', $id)->update(['featured' => 1]);
 				    if($done){
+				    	DB::commit();
 				    	$listing = Listing::where('yachtid', $id)->first();
+
 				    	return response()->json(['status' => "1",
 				    		'message'=> 'Listing featured',
 				    		'data' => new ListingResource($listing), 
 				    	]);
 				    }
 				    else{
+				    	DB::rollBack();
 				    	return response()->json(['status' => "0",
 				    		'message'=> 'Some problem on server',
 				    		'data' => null, 
