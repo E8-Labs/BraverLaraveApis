@@ -420,19 +420,25 @@ class ListingController extends Controller
 				$type = $request->type;
 			}
 
-			$featured = Listing::where('deleted', 0)->where('featured', 1)->where('type', $type)->take(1)->get();
-			return $featured;
+			$featured = Listing::where('deleted', 0)->where('featured', 1)->where('type', $type)->first();
+
 			$page = 1;
 			if($request->has('page')){
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
 			$users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->take(50)->skip($off_set)->get();
-			$users = array_merge($featured, $users);
+			if(count($users) > 0 ){
+				if($featured){
+					$users->splice(0, 0, [$featured]);
+				}
+			}
 			if($request->has('search')){
 				$search = $request->search;
-
-				$users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->where('yachtname', 'LIKE', "%$search%")->take(50)->skip($off_set)->get();
+                if($search != ''){
+                    $users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->where('yachtname', 'LIKE', "%$search%")->take(50)->skip($off_set)->get();
+                }
+				
 			}
 			else{
 
