@@ -510,10 +510,21 @@ class UserAuthController extends Controller
 			
     			$imageData = base64_decode($ima);
     			//Set image whole path here 
-    			$filePath = $_SERVER['DOCUMENT_ROOT']."/". $fileName;
+    			// $filePath = $_SERVER['DOCUMENT_ROOT']."/". $fileName;
 	
+   				// file_put_contents($filePath, $imageData);
+   				// $user->url = $filePath;
+
+
+   				$filePath = $_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/". $fileName;
+
+				// return $filePath;
+            	if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/" . $folder ."/storage/app/Images/")){
+                	Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/");
+            	}
    				file_put_contents($filePath, $imageData);
-   				$user->url = $filePath;
+   				$user->url = "/". $folder. "/storage/app/Images/". $fileName;
+   				$user->baseUrlType = 'New';
    				$user->save();
         	    
         	}
@@ -597,7 +608,7 @@ class UserAuthController extends Controller
         	if($saved){
         		return response()->json(['status' => "1",
 					'message'=> 'User Updated',
-					'data' => $user, 
+					'data' => new UserProfileFullResource($user), 
 				]);
         	}
         	else{
