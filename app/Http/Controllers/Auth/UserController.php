@@ -41,7 +41,7 @@ class UserController extends Controller
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User details',
-					'data' => $user, 
+					'data' => UserProfileLiteResource::collection($user), 
 				]);
 			}
 			else{
@@ -77,7 +77,7 @@ class UserController extends Controller
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User details',
-					'data' => $user, 
+					'data' => new UserProfileFullResource($user), 
 				]);
 			}
 			else{
@@ -158,7 +158,7 @@ class UserController extends Controller
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User approved',
-					'data' => $user, 
+					'data' => new UserProfileFullResource($user), 
 				]);
 			}
 			else{
@@ -219,7 +219,7 @@ class UserController extends Controller
 			if($users){
 				return response()->json(['status' => "1",
 					'message'=> 'User list',
-					'data' => $users, 
+					'data' => UserProfileLiteResource::collection($users), 
 				]);
 			}
 			else{
@@ -269,7 +269,7 @@ class UserController extends Controller
 			if($users){
 				return response()->json(['status' => "1",
 					'message'=> 'User list',
-					'data' => $users, 
+					'data' => UserProfileLiteResource::collection($users), 
 				]);
 			}
 			else{
@@ -318,7 +318,7 @@ class UserController extends Controller
 			if($users){
 				return response()->json(['status' => "1",
 					'message'=> 'User list',
-					'data' => $users, 
+					'data' => UserProfileLiteResource::collection($users), 
 				]);
 			}
 			else{
