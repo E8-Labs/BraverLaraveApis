@@ -421,7 +421,7 @@ class ListingController extends Controller
 			}
 
 			$featured = Listing::where('deleted', 0)->where('featured', 1)->where('type', $type)->take(1)->get();
-
+			return $featured;
 			$page = 1;
 			if($request->has('page')){
 				$page = $request->page;
