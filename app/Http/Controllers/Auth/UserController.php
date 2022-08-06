@@ -41,7 +41,7 @@ class UserController extends Controller
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User details',
-					'data' => UserProfileFullResource::collection($user), 
+					'data' => new UserProfileFullResource($user), 
 				]);
 			}
 			else{
