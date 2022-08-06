@@ -524,7 +524,7 @@ class ListingController extends Controller
 			$lis = new ReportedListing();
 			$lis->reportedproduct = $id;
 			$lis->reportedby = $request->fromid;
-			$list->reason = $request->reason;
+			$lis->reason = $request->reason;
 			$done = $lis->save();
 			if($done){
 				$listing = Listing::where('yachtid', $id)->first();
