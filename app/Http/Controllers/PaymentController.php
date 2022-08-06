@@ -361,7 +361,8 @@ class PaymentController extends Controller
 				]);
 			}
 
-			$res = Reservation::where('chatid', $request->chatid)->first();
+			try{
+				$res = Reservation::where('chatid', $request->chatid)->first();
 			if($res == NULL){
 				return response()->json(['status' => "0",
 					'message'=> 'No reservation found',
@@ -432,6 +433,17 @@ class PaymentController extends Controller
 				$this->sendNotToAllUsers($user, $chat);
 				return response()->json(['status' => "1",
 					'message'=> "Payment processed & reservation made",
+					'data' => null, 
+				]);
+			}
+			}
+			catch(\Exception $e){
+				\Log::info('Reservation exception start');
+				\Log::info($e);
+				\Log::info('Reservation exception end');
+				DB::rollBack();
+				return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
 					'data' => null, 
 				]);
 			}
