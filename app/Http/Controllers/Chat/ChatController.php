@@ -72,6 +72,9 @@ class ChatController extends Controller
 			$user = User::where('userid', $request->fromuser)->first();
 
 			$yachtid = $request->productid;
+			if($yachtid == null){
+				$yachtid = '';
+			}
 
 			$chat = new ChatThread();
 			$chat->chatid = uniqid();
