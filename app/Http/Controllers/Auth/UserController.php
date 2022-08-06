@@ -37,11 +37,11 @@ class UserController extends Controller
 				]);
 			}
 
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User details',
-					'data' => UserProfileLiteResource::collection($user), 
+					'data' => UserProfileFullResource::collection($user), 
 				]);
 			}
 			else{
