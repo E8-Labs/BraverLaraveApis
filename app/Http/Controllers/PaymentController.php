@@ -338,8 +338,8 @@ class PaymentController extends Controller
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
 			"userid" => 'required',
-			"reservationdate" => 'required',
-			"reservationtime" => 'required',
+			// "reservationdate" => 'required',
+			// "reservationtime" => 'required',
 			"yachtid" => 'required',
 			"amount" => 'required',
 			"chatid" => 'required',
