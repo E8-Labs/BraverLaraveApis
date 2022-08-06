@@ -519,11 +519,12 @@ class ListingController extends Controller
 				]);
 			}
 
-			$id = $request->yachtid;
+			try{
+				$id = $request->yachtid;
 			$lis = new ReportedListing();
 			$lis->reportedproduct = $id;
 			$lis->reportedby = $request->fromid;
-			$list->reason = $request->reason;
+			$lis->reason = $request->reason;
 			$done = $lis->save();
 			if($done){
 				$listing = Listing::where('yachtid', $id)->first();
@@ -535,6 +536,14 @@ class ListingController extends Controller
 			else{
 				return response()->json(['status' => "0",
 					'message'=> 'Some issue on server',
+					'data' => null, 
+				]);
+			}
+			}
+			catch(\Exception $e){
+				\Log::info($e);
+				return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
 					'data' => null, 
 				]);
 			}

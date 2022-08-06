@@ -29,8 +29,8 @@ class ChatController extends Controller
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
 			"fromuser" => 'required',
-			"reservationdate" => 'required',
-			"reservationtime" => 'required',
+			// "reservationdate" => 'required',
+			// "reservationtime" => 'required',
 			// "productid" => 'required',
 			"chattype" => 'required',
 			"chatforproduct" => 'required',
@@ -167,14 +167,14 @@ class ChatController extends Controller
 					$res->guests = $request->guests;
 				}
 				else{
-					$res->guests = '';
+					$res->guests = NULL;
 				}
 
 				if($request->has('days')){
 					$res->days = $request->days;
 				}
 				else{
-					$res->days = '';
+					$res->days = NULL;
 				}
 
 				

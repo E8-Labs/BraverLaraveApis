@@ -50,7 +50,7 @@ class PaymentController extends Controller
 				]);
 			}
 
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
 			$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
 			if($user->stripecustomerid == NULL || $user->stripecustomerid == ''){
 				//Generate Stripe id
@@ -338,8 +338,8 @@ class PaymentController extends Controller
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
 			"userid" => 'required',
-			"reservationdate" => 'required',
-			"reservationtime" => 'required',
+			// "reservationdate" => 'required',
+			// "reservationtime" => 'required',
 			"yachtid" => 'required',
 			"amount" => 'required',
 			"chatid" => 'required',
@@ -361,7 +361,8 @@ class PaymentController extends Controller
 				]);
 			}
 
-			$res = Reservation::where('chatid', $request->chatid)->first();
+			try{
+				$res = Reservation::where('chatid', $request->chatid)->first();
 			if($res == NULL){
 				return response()->json(['status' => "0",
 					'message'=> 'No reservation found',
@@ -399,7 +400,7 @@ class PaymentController extends Controller
 			}
 
 
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
 			if($user->stripecustomerid == NULL || $user->stripecustomerid == ''){
 				return response()->json(['status' => "0",
 					'message'=> "User haven't added any Payment method",
@@ -432,6 +433,17 @@ class PaymentController extends Controller
 				$this->sendNotToAllUsers($user, $chat);
 				return response()->json(['status' => "1",
 					'message'=> "Payment processed & reservation made",
+					'data' => null, 
+				]);
+			}
+			}
+			catch(\Exception $e){
+				\Log::info('Reservation exception start');
+				\Log::info($e);
+				\Log::info('Reservation exception end');
+				DB::rollBack();
+				return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
 					'data' => null, 
 				]);
 			}
@@ -587,7 +599,7 @@ class PaymentController extends Controller
 			$resid = $request->reservationid;
 			$fromid = $request->fromid;
 
-			$fromUser = User::where("userid", $fromid)->orWhere("id", $fromid)->first();
+			$fromUser = User::where("userid", $fromid)->first();
 
 			$res = Reservation::where('reservationid', $resid)->first();
 			$reason = "";

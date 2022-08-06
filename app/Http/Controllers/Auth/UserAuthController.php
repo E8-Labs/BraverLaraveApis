@@ -606,7 +606,7 @@ class UserAuthController extends Controller
 
         	$saved = $user->save();
         	if($saved){
-        		return response()->json(['status' => "1",
+        		return response()->json(['status' => (string)"1",
 					'message'=> 'User Updated',
 					'data' => new UserProfileFullResource($user), 
 				]);
