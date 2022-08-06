@@ -128,7 +128,7 @@ class ChatController extends Controller
 				$res->reservationstatus = ReservationStatus::StatusPendingPayment;
 				$res->reservedfor = $request->fromuser;
 				$res->dateadded = Carbon::now()->toDateTimeString();
-				$res->yachtid = $request->productid;
+				$res->yachtid = $yachtid;
 
 				if($request->has('reservationdate')){
 					$res->reservationdate = $request->reservationdate;
