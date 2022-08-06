@@ -29,8 +29,8 @@ class ChatController extends Controller
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
 			"fromuser" => 'required',
-			"reservationdate" => 'required',
-			"reservationtime" => 'required',
+			// "reservationdate" => 'required',
+			// "reservationtime" => 'required',
 			// "productid" => 'required',
 			"chattype" => 'required',
 			"chatforproduct" => 'required',
