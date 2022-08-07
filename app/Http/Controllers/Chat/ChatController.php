@@ -190,7 +190,7 @@ class ChatController extends Controller
 					$token = $from->fcmtoken;
                 	$data = array();
                 	$data["title"] = $from->name;
-                	$data["body"] = "requested to reserve " . $chatforproduct;
+                	$data["body"] = "requested to reserve " . $request->chatforproduct;
                 	$data["sound"] = "default";
                 	$data["chatid"] = $chatid;
                 	$this->Push_Notification($token, $data);
