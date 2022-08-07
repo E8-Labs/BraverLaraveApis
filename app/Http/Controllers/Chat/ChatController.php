@@ -185,6 +185,16 @@ class ChatController extends Controller
 
 				if($res->save()){
 					DB::commit();
+					$admin = User::where('role', 'ADMIN')->first();
+					$from = User::where('userid', $request->fromuser)->first();
+					$token = $from->fcmtoken;
+                	$data = array();
+                	$data["title"] = $from->name;
+                	$data["body"] = "requested to reserve " . $chatforproduct;
+                	$data["sound"] = "default";
+                	$data["chatid"] = $chatid;
+                	$this->Push_Notification($token, $data);
+
 					return response()->json(['status' => "1",
 						'message'=> 'Chat created',
 						'data' => new ChatResource($chat), 
