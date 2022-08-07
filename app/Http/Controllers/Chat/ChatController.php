@@ -187,12 +187,12 @@ class ChatController extends Controller
 					DB::commit();
 					$admin = User::where('role', 'ADMIN')->first();
 					$from = User::where('userid', $request->fromuser)->first();
-					$token = $from->fcmtoken;
+					$token = $admin->fcmtoken;
                 	$data = array();
                 	$data["title"] = $from->name;
                 	$data["body"] = "requested to reserve " . $request->chatforproduct;
                 	$data["sound"] = "default";
-                	$data["chatid"] = $chatid;
+                	$data["chatid"] = $chat->chatid;
                 	$this->Push_Notification($token, $data);
 
 					return response()->json(['status' => "1",
