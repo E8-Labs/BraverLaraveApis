@@ -53,15 +53,15 @@ class ChatController extends Controller
 				]);
 			}
 
-			$chat = ChatThread::where('chatforproduct', $request->chatforproduct)
-					->where('fromuserid', $request->fromuser)
-					->where('chattype', $request->chattype)->first();
-					if($chat){
-						return response()->json(['status' => "1",
-							'message'=> 'Chat already exists',
-							'data' => new ChatResource($chat), 
-						]);
-					}
+			// $chat = ChatThread::where('chatforproduct', $request->chatforproduct)
+			// 		->where('fromuserid', $request->fromuser)
+			// 		->where('chattype', $request->chattype)->first();
+			// 		if($chat){// && ($chat->reservationstatus != ReservationStatus::StatusReserved)
+			// 			return response()->json(['status' => "1",
+			// 				'message'=> 'Chat already exists',
+			// 				'data' => new ChatResource($chat), 
+			// 			]);
+			// 		}
 
 
 			DB::beginTransaction();
