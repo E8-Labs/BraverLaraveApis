@@ -53,15 +53,15 @@ class ChatController extends Controller
 				]);
 			}
 
-			$chat = ChatThread::where('chatforproduct', $request->chatforproduct)
-					->where('fromuserid', $request->fromuser)
-					->where('chattype', $request->chattype)->first();
-					if($chat){
-						return response()->json(['status' => "1",
-							'message'=> 'Chat already exists',
-							'data' => new ChatResource($chat), 
-						]);
-					}
+			// $chat = ChatThread::where('chatforproduct', $request->chatforproduct)
+			// 		->where('fromuserid', $request->fromuser)
+			// 		->where('chattype', $request->chattype)->first();
+			// 		if($chat){// && ($chat->reservationstatus != ReservationStatus::StatusReserved)
+			// 			return response()->json(['status' => "1",
+			// 				'message'=> 'Chat already exists',
+			// 				'data' => new ChatResource($chat), 
+			// 			]);
+			// 		}
 
 
 			DB::beginTransaction();
@@ -72,6 +72,9 @@ class ChatController extends Controller
 			$user = User::where('userid', $request->fromuser)->first();
 
 			$yachtid = $request->productid;
+			if($yachtid == null){
+				$yachtid = '';
+			}
 
 			$chat = new ChatThread();
 			$chat->chatid = uniqid();
@@ -125,7 +128,7 @@ class ChatController extends Controller
 				$res->reservationstatus = ReservationStatus::StatusPendingPayment;
 				$res->reservedfor = $request->fromuser;
 				$res->dateadded = Carbon::now()->toDateTimeString();
-				$res->yachtid = $request->productid;
+				$res->yachtid = $yachtid;
 
 				if($request->has('reservationdate')){
 					$res->reservationdate = $request->reservationdate;
@@ -182,6 +185,16 @@ class ChatController extends Controller
 
 				if($res->save()){
 					DB::commit();
+					$admin = User::where('role', 'ADMIN')->first();
+					$from = User::where('userid', $request->fromuser)->first();
+					$token = $admin->fcmtoken;
+                	$data = array();
+                	$data["title"] = $from->name;
+                	$data["body"] = "requested to reserve " . $request->chatforproduct;
+                	$data["sound"] = "default";
+                	$data["chatid"] = $chat->chatid;
+                	$this->Push_Notification($token, $data);
+
 					return response()->json(['status' => "1",
 						'message'=> 'Chat created',
 						'data' => new ChatResource($chat), 
