@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use App\Models\Auth\User;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
+
+
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -210,6 +214,9 @@ class UserAuthController extends Controller
 		    {
 				
 			DB::commit();
+			$admin = User::where('role', 'ADMIN')->first();
+			Notification::add(NotificationTypes::NewUser, $user_id, $admin->userid, $user);
+			//send push
 			$profile = User::where('userid', $user_id)->first();
 			$user = $profile;
 

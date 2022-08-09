@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
+
 use Carbon\Carbon;
 
 class PaymentController extends Controller
@@ -837,14 +840,15 @@ class PaymentController extends Controller
                     
                 }
                 else{
-                     $token = $user["fcmtoken"];
-                $data = array();
-                $data["title"] = $fromname;
-                $data["body"] = "paid invoice";
-                $data["sound"] = "default";
-                $data["chatid"] = $chatid;
-                
-                $pushsent = $this->Push_Notification($token, $data);
+                //      $token = $user["fcmtoken"];
+                // $data = array();
+                // $data["title"] = $fromname;
+                // $data["body"] = "paid invoice";
+                // $data["sound"] = "default";
+                // $data["chatid"] = $chatid;
+                $admin = User::where('role', 'ADMIN')->first();
+				Notification::add(NotificationTypes::InvoicePaid, $fromuser->userid, $user->userid, $chat);
+                // $pushsent = $this->Push_Notification($token, $data);
                 }
                
             //   $push[$i] = $pushsent;

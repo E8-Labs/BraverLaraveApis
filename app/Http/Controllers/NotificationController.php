@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Auth\User;
 use App\Models\Menu;
-use App\Models\User\Notification;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Validator;
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
 
 class NotificationController extends Controller
 {
@@ -35,9 +36,13 @@ class NotificationController extends Controller
 				]);
 			}
 
-			$not = new Notification();
+			// $not =Notification::add(NotificationTypes::NewUser, $user_id, $admin->userid, $user);
+			$not = new Notification;
 			$not->title = "Notification";
-			$not->subtitle = $request->subtitle;
+			$not->from_user = $request->userid;
+			$not->message = $request->subtitle;
+			$not->notification_type = NotificationTypes::AdminBroadcast;
+			// $not->notifiable_type = $not;
 			$saved = $not->save();
 			if($saved){
 				return response()->json(['status' => "1",
@@ -57,7 +62,7 @@ class NotificationController extends Controller
     function notificationsList(Request $request){
     	$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
-			// "userid" => 'required',
+			"userid" => 'required',
 			// "subtitle" => 'required',
 				]);
 
@@ -84,7 +89,7 @@ class NotificationController extends Controller
 			}
 			$off_set = $page * $limit - $limit;
 
-			$nots = Notification::skip($off_set)->take($limit)->orderBy('created_at', 'DESC')->get();
+			$nots = Notification::where('to_user', $request->userid)->orWhereNull('to_user')->skip($off_set)->take($limit)->orderBy('created_at', 'DESC')->get();
 			return response()->json(['status' => "1",
 					'message'=> 'Notifications obtained',
 					'data' => $nots, 

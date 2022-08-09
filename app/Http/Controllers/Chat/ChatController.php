@@ -20,6 +20,8 @@ use App\Http\Resources\Chat\ChatResource;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
 
 use Carbon\Carbon;
 
@@ -193,8 +195,8 @@ class ChatController extends Controller
                 	$data["body"] = "requested to reserve " . $request->chatforproduct;
                 	$data["sound"] = "default";
                 	$data["chatid"] = $chat->chatid;
-                	$this->Push_Notification($token, $data);
-
+                	// $this->Push_Notification($token, $data);
+					Notification::add(NotificationTypes::TypeReservation, $request->fromuser, $admin->userid, $res);
 					return response()->json(['status' => "1",
 						'message'=> 'Chat created',
 						'data' => new ChatResource($chat), 

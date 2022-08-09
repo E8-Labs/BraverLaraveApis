@@ -13,5 +13,6 @@ class NotificationTypes extends Model
     const InvoicePaid = 3;
     const NewUser = 4;
     const AdminBroadcast = 5;
+    const TypeReservationCancelled = 2;
 
 }
