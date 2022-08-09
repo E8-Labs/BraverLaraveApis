@@ -17,7 +17,7 @@ class Notification extends Model
     protected $fillable = ['notification_type', 'from_user', 'to_user', 'notifiable_id', 'notifiable_type', 'message'];
 
 
-public static function add(int $notification_type, string $from_user, string $to_user = NULL, $notification_for = null)
+public static function add(int $notification_type, string $from_user, string $to_user = NULL, $notification_for = null, string $message = null)
     {
         $notifiable_type = null;
         $notifiable_id   = null;
@@ -34,6 +34,7 @@ public static function add(int $notification_type, string $from_user, string $to
             'to_user'           => $to_user,
             'notifiable_id'     => $notifiable_id,
             'notifiable_type'   => $notifiable_type,
+            'message'           => $message,
         ]);
         self::sendFirebasePushNotification($notification);
         return $notification;
