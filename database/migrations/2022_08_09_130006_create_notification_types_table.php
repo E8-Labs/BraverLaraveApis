@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Model\NotificationTypes;
+use App\Models\NotificationTypes;
 
 return new class extends Migration
 {
