@@ -15,7 +15,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->$table->unsignedBigInteger('notification_type')->default(NotificationTypes::AdminBroadcast);
+            $table->unsignedBigInteger('notification_type')->default(NotificationTypes::AdminBroadcast);
             $table->foreign('notification_type')->references('id')->on('notification_types')->onDelete('cascade');
         });
     }
