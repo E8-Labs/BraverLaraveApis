@@ -628,7 +628,7 @@ class PaymentController extends Controller
 							'message'=> 'Already cancelled and refunded ' ,
 							'data' => null, 
 						]);
-						$res->reservationstatus = ReservationStatus::StatusCancedlled;
+						$res->reservationstatus = ReservationStatus::StatusCancelled;
                 		$res->cancelledby = $fromid;
                 		$res->refunddate = Carbon::now()->toDateTimeString();
                 		$res->save();
@@ -641,7 +641,7 @@ class PaymentController extends Controller
                 	
                 }
                 else{
-                	$res->reservationstatus = ReservationStatus::StatusCancedlled;
+                	$res->reservationstatus = ReservationStatus::StatusCancelled;
                 	$res->cancelledby = $fromid;
                 	$res->refunddate = Carbon::now()->toDateTimeString();
                 	$res->refundid = $ref->id;
