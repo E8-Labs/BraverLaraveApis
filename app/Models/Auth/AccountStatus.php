@@ -11,4 +11,5 @@ class AccountStatus extends Model
     const Pending = "Pending";
     const Approved = "Approved";
     const Deleted = "Deleted";
+    const ApprovedShowFlag = 'ApprovedShowFlag';
 }

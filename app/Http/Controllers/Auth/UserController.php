@@ -154,7 +154,8 @@ class UserController extends Controller
 			}
 
 			try{
-			    $user = User::where('userid', $request->userid)->update(['accountstatus'=> AccountStatus::Approved]);
+				//ApprovedShowFlag
+			    $user = User::where('userid', $request->userid)->update(['accountstatus'=> AccountStatus::Approved, 'role' => $request->role]);
 			if($user){
 				return response()->json(['status' => "1",
 					'message'=> 'User approved',
