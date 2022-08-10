@@ -258,7 +258,7 @@ class UserAuthController extends Controller
 
 
 		function checkCode(Request $request){
-			$validator = Validator::make($req->all(), [
+			$validator = Validator::make($request->all(), [
 				'code' => 'required',
 			]);
 
@@ -269,7 +269,7 @@ class UserAuthController extends Controller
 					'validation_errors'=> $validator->errors()]);
 			}
 
-			$key = $req->apikey;
+			$key = $request->apikey;
 			if($key != $this->APIKEY){ // get value from constants
 				return response()->json(['status' => "0",
 					'message'=> 'invalid api key',
