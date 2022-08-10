@@ -40,6 +40,7 @@ Route::post("reset-password-admin",[AuthForgotPasswordController::class,'resetPa
 
 
 Route::post("checkemail",[UserAuthController::class,'checkEmailExists']);
+Route::post("checkcode",[UserAuthController::class,'checkCode']);
 Route::post("checkphone",[UserAuthController::class,'checkPhoneExists']);
 Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);

@@ -256,6 +256,42 @@ class UserAuthController extends Controller
 		 
 		}
 
+
+		function checkCode(Request $request){
+			$validator = Validator::make($req->all(), [
+				'code' => 'required',
+			]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $req->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			
+			$user = User::where('myinvitecode', $request->code)->first();
+			if($user){
+				return response()->json(['status' => "1",
+					'message'=> 'Invite code is valid',
+					'data' => $user, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Code is invalid',
+					'data' => null, 
+				]);
+			}
+		}
+
 		private function createCandidate($user){
 			if($user->chekrcandidateid == NULL){
                         	$dob = '';
