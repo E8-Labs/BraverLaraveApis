@@ -52,9 +52,11 @@ class UserAuthController extends Controller
     	$userid = $request->userid;
     	$user = User::where('userid', $userid)->first();
 
-    	$rep = new ReportController();
-    	if($user->chekrreportid != NULL){
-    		// return "report id not null";
+    	
+    	try{
+    	    $rep = new ReportController();
+    	    if($user->chekrreportid != NULL){
+    // 		return "report id not null";
     		if($user->ssn_trace == 'complete' && $user->national_status == 'complete' && $user->sex_offender_status == 'clear' && $user->chekrstatus == 'clear'){
     			// get no need to get report
     			// User::where('userid', $userid)->update(['accountstatus'=> 'Approved']);
@@ -71,7 +73,9 @@ class UserAuthController extends Controller
 			]);
     	}
     	else{
+    	   // return "NULL";
     		$id = $this->createCandidate($user);
+    // 		return $id;
     		$report = $rep->getCheckrReport($id);
     		$report_error = null;
     		// return $report;
@@ -91,6 +95,14 @@ class UserAuthController extends Controller
 					'data' => null, 
 				]);
     		}
+    	}
+    	}
+    	catch(\Exception $e){
+    	    \Log::info($e);
+    	    return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
+					'data' => null, 
+			]);
     	}
     	
     }
@@ -311,7 +323,7 @@ class UserAuthController extends Controller
 			        		    ];
 			        		    
 			        		    $json = $this->createCheckrCandidate($data);
-			        		    
+			        		   // echo json_encode($json);
 			        		    if(array_key_exists('id', $json)){
 			        		    	$user->chekrcandidateid = $json['id'];
 			        		        
