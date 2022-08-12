@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use App\Models\Auth\User;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
+
+
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -48,9 +52,11 @@ class UserAuthController extends Controller
     	$userid = $request->userid;
     	$user = User::where('userid', $userid)->first();
 
-    	$rep = new ReportController();
-    	if($user->chekrreportid != NULL){
-    		// return "report id not null";
+    	
+    	try{
+    	    $rep = new ReportController();
+    	    if($user->chekrreportid != NULL){
+    // 		return "report id not null";
     		if($user->ssn_trace == 'complete' && $user->national_status == 'complete' && $user->sex_offender_status == 'clear' && $user->chekrstatus == 'clear'){
     			// get no need to get report
     			// User::where('userid', $userid)->update(['accountstatus'=> 'Approved']);
@@ -67,7 +73,9 @@ class UserAuthController extends Controller
 			]);
     	}
     	else{
+    	   // return "NULL";
     		$id = $this->createCandidate($user);
+    // 		return $id;
     		$report = $rep->getCheckrReport($id);
     		$report_error = null;
     		// return $report;
@@ -87,6 +95,14 @@ class UserAuthController extends Controller
 					'data' => null, 
 				]);
     		}
+    	}
+    	}
+    	catch(\Exception $e){
+    	    \Log::info($e);
+    	    return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
+					'data' => null, 
+			]);
     	}
     	
     }
@@ -210,6 +226,9 @@ class UserAuthController extends Controller
 		    {
 				
 			DB::commit();
+			$admin = User::where('role', 'ADMIN')->first();
+			Notification::add(NotificationTypes::NewUser, $user_id, $admin->userid, $user);
+			//send push
 			$profile = User::where('userid', $user_id)->first();
 			$user = $profile;
 
@@ -249,6 +268,42 @@ class UserAuthController extends Controller
 		 
 		}
 
+
+		function checkCode(Request $request){
+			$validator = Validator::make($request->all(), [
+				'code' => 'required',
+			]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+			
+			$user = User::where('myinvitecode', $request->code)->first();
+			if($user){
+				return response()->json(['status' => "1",
+					'message'=> 'Invite code is valid',
+					'data' => $user, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Code is invalid',
+					'data' => null, 
+				]);
+			}
+		}
+
 		private function createCandidate($user){
 			if($user->chekrcandidateid == NULL){
                         	$dob = '';
@@ -268,7 +323,7 @@ class UserAuthController extends Controller
 			        		    ];
 			        		    
 			        		    $json = $this->createCheckrCandidate($data);
-			        		    
+			        		   // echo json_encode($json);
 			        		    if(array_key_exists('id', $json)){
 			        		    	$user->chekrcandidateid = $json['id'];
 			        		        

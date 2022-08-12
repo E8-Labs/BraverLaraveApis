@@ -130,7 +130,10 @@ class ReportController extends Controller
 
   public function getCheckrReport($candidatid){
         $api_key=env('chekrapikey');
-        $report_params = [ "candidate_id" => $candidatid,  "package" => "basic_criminal"];
+        $work_locations = ["city" => "San Francisco", 'state' => 'CA', 'country' => 'US'];
+        $report_params = [ "candidate_id" => $candidatid,  "package" => "tasker_standard", 'work_locations' => [$work_locations]];
+        // echo json_encode($report_params);
+        // die();
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $this->URL_REPORTS);
         curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");

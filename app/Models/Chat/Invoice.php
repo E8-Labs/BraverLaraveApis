@@ -9,7 +9,7 @@ class Invoice extends Model
 {
     use HasFactory;
     protected $table = "invoice";
-    protected $primaryKey = 'invoiceid';
+    protected $primaryKey = 'invoice_id';
     public $timestamps = false;
     public $incrementing = false;
 

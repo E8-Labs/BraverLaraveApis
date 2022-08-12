@@ -136,6 +136,7 @@ class UserController extends Controller
     	$validator = Validator::make($request->all(), [
 			'userid' => 'required',
 			"apikey" => 'required',
+			"role" => 'required',
 				]);
 
 			if($validator->fails()){
@@ -154,8 +155,13 @@ class UserController extends Controller
 			}
 
 			try{
-			    $user = User::where('userid', $request->userid)->update(['accountstatus'=> AccountStatus::Approved]);
-			if($user){
+				//ApprovedShowFlag
+				$user = User::where('userid', $request->userid)->first();
+			    $user->accountstatus = AccountStatus::Approved;
+			    $user->role = $request->role;
+			    $saved = $user->save();
+			if($saved){
+				
 				return response()->json(['status' => "1",
 					'message'=> 'User approved',
 					'data' => new UserProfileFullResource($user), 

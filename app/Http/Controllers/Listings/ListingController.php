@@ -427,7 +427,16 @@ class ListingController extends Controller
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
-			$users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->take(50)->skip($off_set)->get();
+			$users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
+			->when($request->has('lat'), function($query) use($request){
+				$lat = $request->lat;
+				$lang = $request->lang;
+				$query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
+                ->orderBy('distance', 'ASC');
+
+			})
+			
+			->take(50)->skip($off_set)->get();
 			if(count($users) > 0 ){
 				if($featured){
 					$users->splice(0, 0, [$featured]);
@@ -436,7 +445,21 @@ class ListingController extends Controller
 			if($request->has('search')){
 				$search = $request->search;
                 if($search != ''){
-                    $users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->where('yachtname', 'LIKE', "%$search%")->take(50)->skip($off_set)->get();
+                	$tokens = explode(" ", $search);
+                	// return $tokens;
+                    $query = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
+                    ->when($request->has('lat'), function($query) use($request){
+						$lat = $request->lat;
+						$lang = $request->lang;
+						$query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
+                		->orderBy('distance', 'ASC');
+
+					});
+					foreach($tokens as $tok){
+						$query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
+					}
+
+                    $users = $query->take(50)->skip($off_set)->get();
                 }
 				
 			}

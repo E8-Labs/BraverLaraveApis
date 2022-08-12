@@ -20,11 +20,59 @@ use App\Http\Resources\Chat\ChatResource;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
 
 use Carbon\Carbon;
 
 class ChatController extends Controller
 {
+
+
+	// function sendMessageNotification(Request $request){
+	// 	$validator = Validator::make($request->all(), [
+	// 		"apikey" => 'required',
+	// 		"userid" => 'required',
+	// 		"chatid" => 'required',
+	// 		'message' >
+	// 			]);
+
+	// 		if($validator->fails()){
+	// 			return response()->json(['status' => "0",
+	// 				'message'=> 'validation error',
+	// 				'data' => null, 
+	// 				'validation_errors'=> $validator->errors()]);
+	// 		}
+
+	// 		$key = $request->apikey;
+	// 		if($key != $this->APIKEY){ // get value from constants
+	// 			return response()->json(['status' => "0",
+	// 				'message'=> 'invalid api key',
+	// 				'data' => null, 
+	// 			]);
+	// 		}
+
+
+	// 	$not = new Notification;
+	// 		$not->title = "Notification";
+	// 		$not->from_user = $request->userid;
+	// 		$not->message = $request->subtitle;
+	// 		$not->notification_type = NotificationTypes::AdminBroadcast;
+	// 		// $not->notifiable_type = $not;
+	// 		$saved = $not->save();
+	// 		if($saved){
+	// 			return response()->json(['status' => "1",
+	// 				'message'=> 'Notification Saved',
+	// 				'data' => $not, 
+	// 			]);
+	// 		}
+	// 		else{
+	// 			return response()->json(['status' => "0",
+	// 				'message'=> 'Error Saving Notification',
+	// 				'data' => null, 
+	// 			]);
+	// 		}
+	// }
     function createChat(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
@@ -193,8 +241,8 @@ class ChatController extends Controller
                 	$data["body"] = "requested to reserve " . $request->chatforproduct;
                 	$data["sound"] = "default";
                 	$data["chatid"] = $chat->chatid;
-                	$this->Push_Notification($token, $data);
-
+                	// $this->Push_Notification($token, $data);
+					Notification::add(NotificationTypes::TypeReservation, $request->fromuser, $admin->userid, $res);
 					return response()->json(['status' => "1",
 						'message'=> 'Chat created',
 						'data' => new ChatResource($chat), 
@@ -493,6 +541,14 @@ class ChatController extends Controller
 			if($request->has('lastmessage')){
 				$lastmessage = $request->lastmessage;
 				$chat->lastmessage = $request->lastmessage;
+				// $not->title = "Notification";
+				// $not = new Notification;
+				// $not->from_user = $fromid;
+				// $not->message = $lastmessage;
+				// $not->notification_type = NotificationTypes::TypeMessage;
+				// $not->notifiable_type = $chat;
+
+				// $saved = $not->save();
 			}
 
 			
@@ -515,13 +571,14 @@ class ChatController extends Controller
                     
                 }
                 else{
-                    $token = $cu->fcmtoken;
-                	$data = array();
-                	$data["title"] = $fromname;
-                	$data["body"] = $lastmessage;
-                	$data["sound"] = "default";
-                	$data["chatid"] = $chatid;
-                	$this->Push_Notification($token, $data);
+                 //    $token = $cu->fcmtoken;
+                	// $data = array();
+                	// $data["title"] = $fromname;
+                	// $data["body"] = $lastmessage;
+                	// $data["sound"] = "default";
+                	// $data["chatid"] = $chatid;
+                	// $this->Push_Notification($token, $data);
+                	Notification::add(NotificationTypes::TypeMessage, $fromid, $cu->userid, $chat, $request->lastmessage);
 
                 }
 				
