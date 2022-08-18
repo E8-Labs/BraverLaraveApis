@@ -28,7 +28,7 @@ class ListingController extends Controller
 		$validator = Validator::make($request->all(), [
 			'yachtname' => 'required',
 // 			'address' => 'required',
-			'yachtdescription' => 'required',
+			// 'yachtdescription' => 'required',
 // 			'userid' => 'required',
 			'type' => 'required',
 			"apikey" => 'required',
