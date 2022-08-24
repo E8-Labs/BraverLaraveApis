@@ -30,7 +30,7 @@ class ListingResource extends JsonResource
 
             $location = $this->yachtaddress;
             if($location === NULL || $location === ''){
-                $location = "Global";
+                $location = "";
             }
         return [
             "yachtid"=> $this->yachtid,

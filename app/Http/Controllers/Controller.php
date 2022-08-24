@@ -110,7 +110,7 @@ class Controller extends BaseController
 
     public function getchekrreportFromServer($user)
     {
-       //echo "<pre>".print_r($_REQUEST,true)."</pre"; die();
+       // echo "<pre>".print_r($_REQUEST,true)."</pre"; die();
        
 
         try {
@@ -126,6 +126,7 @@ class Controller extends BaseController
             //     // return $report;
             //     $chekr = $report['id'];
             // }
+            // return "Checkr";
          if ($chekr != null) {
                $api_key=env('chekrapikey');  
           $curl = curl_init();
