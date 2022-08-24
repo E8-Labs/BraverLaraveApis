@@ -56,46 +56,47 @@ class UserAuthController extends Controller
     	try{
     	    $rep = new ReportController();
     	    if($user->chekrreportid != NULL){
-    // 		return "report id not null";
-    		if($user->ssn_trace == 'complete' && $user->national_status == 'complete' && $user->sex_offender_status == 'clear' && $user->chekrstatus == 'clear'){
-    			// get no need to get report
-    			// User::where('userid', $userid)->update(['accountstatus'=> 'Approved']);
-
-    			$user->accountstatus = AccountStatus::Approved;
-    			$user->save();
-    			return $user;
-    		}
-    		// return "getting report details";
-    		$report = $this->getchekrreportFromServer($user);
-    		return response()->json(['status' => "1",
-					'message'=> 'Report created',
-					'data' => $report, 
-			]);
-    	}
-    	else{
-    	   // return "NULL";
-    		$id = $this->createCandidate($user);
-    // 		return $id;
-    		$report = $rep->getCheckrReport($id);
-    		$report_error = null;
-    		// return $report;
-    		if(!isset($report->error)){
-    			$id = $report->id;
-    			User::where('userid', $user->userid)->update(['chekrreportid' => $id]);
-    			$user = User::where('userid', $user->userid)->first();
+    // 			return "report id not null";
+    			if($user->ssn_trace == 'complete' && $user->national_status == 'complete' && $user->sex_offender_status == 'clear' 	&& $user->chekrstatus == 'clear'){
+    				// get no need to get report
+    				// User::where('userid', $userid)->update(['accountstatus'=> 'Approved']);
+	
+    				$user->accountstatus = AccountStatus::Approved;
+    				$user->save();
+    				return $user;
+    			}
+    			// return "getting report details";
+    			
+    			$report = $this->getchekrreportFromServer($user);
     			return response()->json(['status' => "1",
-					'message'=> 'Report created',
-					'data' => new UserProfileFullResource($user), 
+						'message'=> 'Report created',
+						'data' => $report, 
 				]);
     		}
     		else{
-    			$report_error = $report->error;
-    			return response()->json(['status' => "0",
-					'message'=> $report_error,
-					'data' => null, 
-				]);
+    		   // return "NULL";
+    			$id = $this->createCandidate($user);
+    			// return $id;
+    			$report = $rep->getCheckrReport($id);
+    			$report_error = null;
+    			// return $report;
+    			if(!isset($report->error)){
+    				$id = $report->id;
+    				User::where('userid', $user->userid)->update(['chekrreportid' => $id]);
+    				$user = User::where('userid', $user->userid)->first();
+    				return response()->json(['status' => "1",
+						'message'=> 'Report created',
+						'data' => new UserProfileFullResource($user), 
+					]);
+    			}
+    			else{
+    				$report_error = $report->error;
+    				return response()->json(['status' => "0",
+						'message'=> $report_error,
+						'data' => null, 
+					]);
+    			}
     		}
-    	}
     	}
     	catch(\Exception $e){
     	    \Log::info($e);
@@ -311,15 +312,17 @@ class UserAuthController extends Controller
                         	if($user->dob){
                         	    // return ["date" => "". $user->dob];
                         	    $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
-                        	    
+                        	    $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
+        
                         	    $data = [
 			        		        "first_name" => $user->name,
-			        		        "last_name" => $user->name,
+			        		        "last_name" => $user->last_name,
 			        		        "phone" => $user->phone,
 			        		        "email" => $user->email,
 			        		        "dob" => $dob,
 			        		        "ssn" => $user->ssn,
 			        		        "zipcode"=>$user->zip,
+			        		        'work_locations[]' => $work_locations
 			        		    ];
 			        		    
 			        		    $json = $this->createCheckrCandidate($data);
@@ -333,6 +336,8 @@ class UserAuthController extends Controller
 			        		    }
 			        		    else{
 	                    	        $chekr_error = $json['error'];
+	                    	        // echo json_encode($json);
+	                    	        // die();
 	                    	        return NULL;
 			        		    }
                         	}

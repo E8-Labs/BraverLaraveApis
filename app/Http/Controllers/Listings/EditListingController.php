@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Auth\User;
 use App\Models\Listing;
+use App\Models\ListingTypes;
 use App\Models\Listing\ListingImage;
 use App\Models\Listing\ReportedListing;
 use App\Models\Auth\AccountStatus;
@@ -65,14 +66,21 @@ class EditListingController extends Controller
 
 		if($request->has('yachtdescription')){
 			$des = $request->yachtdescription;
-			if($des == null || $des == ''){
+			if(($des == null || $des == '') && $listing->type !== ListingTypes::TypeTrip){
 				return response()->json(['status' => "0",
-					'message'=> 'Yacht description can not be empty',
+					'message'=> 'Listing description can not be empty',
 					'data' => null, 
 				]);
 			}
+// 			if($des == ''){
+// 				return response()->json(['status' => "0",
+// 					'message'=> 'Listing description is empty',
+// 					'data' => null, 
+// 				]);
+// 			}
 			$listing->yachtdescription = $request->yachtdescription;
 		}
+		
 		if($request->has('phone')){
 			$listing->yachtphone = $request->phone;
 		}

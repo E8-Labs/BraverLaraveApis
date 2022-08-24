@@ -37,6 +37,8 @@ class UserProfileFullResource extends JsonResource
             "myinvitecode"=> $this->myinvitecode,
             "invitedbycode"=> $this->invitedbycode,
             "stripecustomerid"=> $this->stripecustomerid,
+            'city' => $this->city,
+            'state' => $this->state,
         ];
     }
 }

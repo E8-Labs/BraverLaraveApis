@@ -27,13 +27,18 @@ class ListingResource extends JsonResource
             else{
                 $image = \Config::get('constants.item_images') . $image;
             }
+
+            $location = $this->yachtaddress;
+            if($location === NULL || $location === ''){
+                $location = "";
+            }
         return [
             "yachtid"=> $this->yachtid,
             "yachtname"=> $this->yachtname,
             "yachtdescription"=> $this->yachtdescription,
             "yachtprice"=> $this->yachtprice,
             "price_full_day"=> $this->price_full_day,
-            "yachtaddress"=> $this->yachtaddress,
+            "yachtaddress"=> $location,
             "yachtweburl"=> $this->yachtweburl,
             "yachtphone"=> $this->yachtphone,
             "addedby"=> $this->addedby,

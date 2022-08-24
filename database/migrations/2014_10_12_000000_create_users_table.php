@@ -33,7 +33,12 @@ return new class extends Migration
             $table->string('stripecustomerid',50);
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
+
             $table->timestamps();
+            $table->double('lat')->default(0);
+            $table->double('lang')->default(0);
+            $table->string('city')->default("");
+            $table->string('state')->default("");
         });
     }
 

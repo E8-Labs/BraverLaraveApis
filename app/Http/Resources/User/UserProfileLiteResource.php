@@ -28,7 +28,7 @@ class UserProfileLiteResource extends JsonResource
             // "phone"=> $this->phone,
             // "dob"=> $this->dob,
             // "gender"=> $this->gender,
-            // "dateadded"=> $this->dateadded,
+            "dateadded"=> $this->dateadded,
             "role"=> $this->role,
             // "fcmtoken"=> $this->fcmtoken,
             "url"=> $image,
