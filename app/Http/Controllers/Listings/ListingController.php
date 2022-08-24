@@ -455,9 +455,13 @@ class ListingController extends Controller
                 		->orderBy('distance', 'ASC');
 
 					});
-					foreach($tokens as $tok){
-						$query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
-					}
+					$query->where(function($query) use($tokens){
+						foreach($tokens as $tok){
+
+							$query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
+						}
+					});
+					
 
                     $users = $query->take(50)->skip($off_set)->get();
                 }
