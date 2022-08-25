@@ -226,6 +226,9 @@ class ListingController extends Controller
 			}
 		}
 		catch(\Exception $e){
+			\Log::info("-------------------------------Listing Add Exception Start-------------------------------");
+			\Log::info($e);
+			\Log::info("-------------------------------Listing Add Exception End---------------------------------");
 		    return response()->json(['status' => false,
 					'message'=> 'Listing  not added',
 					'error' => $e->getMessage(),
