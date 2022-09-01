@@ -604,7 +604,7 @@ class ChatController extends Controller
 						$cu->userid = $u->userid;
 						$cu->role = 'Team';
 						$cu->save();
-
+						Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u->userid, $chat, '');
 
 					}
 				}
