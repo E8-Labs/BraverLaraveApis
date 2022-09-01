@@ -47,7 +47,7 @@ class ChatController extends Controller
 	// 		$key = $request->apikey;
 	// 		if($key != $this->APIKEY){ // get value from constants
 	// 			return response()->json(['status' => "0",
-	// 				'message'=> 'invalid api key',
+	// 				'message'=> 'invalid api key',u
 	// 				'data' => null, 
 	// 			]);
 	// 		}
@@ -578,7 +578,14 @@ class ChatController extends Controller
                 	// $data["sound"] = "default";
                 	// $data["chatid"] = $chatid;
                 	// $this->Push_Notification($token, $data);
-                	Notification::add(NotificationTypes::TypeMessage, $fromid, $cu->userid, $chat, $request->lastmessage);
+                	$lastmessage = $request->lastmessage;
+                	if($lastmessage === NULL || $lastmessage === ''){
+                	    //don't sent not
+                	}
+                	else{
+                	    Notification::add(NotificationTypes::TypeMessage, $fromid, $cu->userid, $chat, $request->lastmessage);
+                	}
+                	
 
                 }
 				
@@ -591,26 +598,51 @@ class ChatController extends Controller
 				}
 			}
 
+
+                
 			if($request->has('users')){
 				$users = $request->users;
-				if(count($users) > 0){
+				
+				try{
+					if(count($users) > 0){
 					// ChatUser::where('chatid', $chatid)->where('role', 'Team')->delete();
-					foreach($users as $u){
-						$cu = ChatUser::where('chatid', $chatid)->where('userid', $u->userid)->first();
-						if($cu == NULL){
-							$cu = new ChatUser();
-						}
-						$u->chatid = $chatid;
-						$cu->userid = $u->userid;
-						$cu->role = 'Team';
-						$cu->save();
-						Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u->userid, $chat, '');
-
-					}
+					    foreach($users as $u){
+					        
+					    	$cu = ChatUser::where('chatid', $chatid)->where('userid', $u["userid"])->first();
+					    	if($cu == NULL){
+					    		$cu = new ChatUser();
+					    	}
+					    	$cu->chatid = $chatid;
+					    	$cu->userid = $u["userid"];
+					    	$cu->role = 'Team';
+					    	$saved = $cu->save();
+					    	return response()->json(['status' => "0",
+					            'message'=> 'Foreach loop users ',
+					            'user' => $u, 
+					            'saved' => $saved,
+				            ]);
+					    	Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u["userid"], $chat, '');
+    
+					    }
+				    }
 				}
+				catch(\Exception $e){
+					return response()->json(['status' => "0",
+						'message'=> $e->getMessage(),
+						'data' => null, 
+						'exception' => $e,
+					]);
+				}
+				
+				
+				
 			}
 			else{
 				// update unread count
+				return response()->json(['status' => "0",
+					'message'=> 'No chat users',
+					'request' => $request->all(), 
+				]);
 				if($updateother == "0"){
 
 					ChatUser::where('chatid', $chatid)->where('userid', $fromid)->update(['unreadcount' => 0]);
