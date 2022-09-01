@@ -146,6 +146,9 @@ public static function add(int $notification_type, string $from_user, string $to
             case NotificationTypes::TypeReservationCancelled:
                 $title = "Reservation cancelled";
                 break;
+            case NotificationTypes::TeamMemberReservationInvite:
+                $title = "Reservation invitation";
+                break;
             
         }
 
@@ -178,6 +181,9 @@ public static function add(int $notification_type, string $from_user, string $to
                 break;
             case NotificationTypes::AdminBroadcast:
                 $message = $this->message;
+                break;
+            case NotificationTypes::TeamMemberReservationInvite:
+                $message = "Admin invited you to manage a reservation";
                 break;
         }
         return $message;
