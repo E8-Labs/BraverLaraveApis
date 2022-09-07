@@ -8,6 +8,7 @@ use App\Models\Menu;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Validator;
 use App\Models\NotificationTypes;
+use App\Http\Resources\NotificationResource;
 use App\Models\User\Notification;
 
 class NotificationController extends Controller
@@ -92,7 +93,7 @@ class NotificationController extends Controller
 			$nots = Notification::where('to_user', $request->userid)->orWhereNull('to_user')->skip($off_set)->take($limit)->orderBy('created_at', 'DESC')->get();
 			return response()->json(['status' => "1",
 					'message'=> 'Notifications obtained',
-					'data' => $nots, 
+					'data' => NotificationResource::collection($nots), 
 				]);
     }
 }
