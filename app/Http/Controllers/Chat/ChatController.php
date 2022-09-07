@@ -616,12 +616,20 @@ class ChatController extends Controller
 					    	$cu->userid = $u["userid"];
 					    	$cu->role = 'Team';
 					    	$saved = $cu->save();
-					    	return response()->json(['status' => "0",
-					            'message'=> 'Foreach loop users ',
-					            'user' => $u, 
-					            'saved' => $saved,
+					   // 	return response()->json(['status' => "0",
+					   //         'message'=> 'Foreach loop users ',
+					   //         'user' => $u, 
+					   //         'saved' => $saved,
+				    //         ]);
+					    	$not = Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u["userid"], $chat, '');
+					    	$chat = ChatThread::where('chatid', $chatid)->first();
+					    	return response()->json(['status' => "1",
+					            'message'=> 'Users added ',
+					            'not' => $not, 
+					            'from' => $fromid,
+					            "uid" => $u["userid"],
+					            "data" => new ChatResource($chat),
 				            ]);
-					    	Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u["userid"], $chat, '');
     
 					    }
 				    }

@@ -27,6 +27,11 @@
     'profile_images_new' => 'http://braverhospitalityapp.com',
     'profile_images_save' => 'public/profile_images/',
 
+    'calendar_ic' => 'http://braverhospitalityapp.com/braver/storage/app/not_icons/calendar_ic.png',
+    'message_ic' => 'http://braverhospitalityapp.com/braver/storage/app/not_icons/message_ic.png',
+    'invoice_ic' => 'http://braverhospitalityapp.com/braver/storage/app/not_icons/invoice_ic.png',
+    'new_user_ic' => 'http://braverhospitalityapp.com/braver/storage/app/not_icons/new_user_ic.png',
+
 
     'item_images_old' => 'http://braverhospitalityapp.com/phg/',
     'item_images' => 'http://braverhospitalityapp.com/braver/storage/app/',
