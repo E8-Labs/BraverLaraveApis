@@ -5,6 +5,7 @@ namespace App\Http\Resources\Listing;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\Listing\ListingImage;
 use App\Http\Resources\Listing\ListingImageResource;
+use App\Models\ListingTypes;
 
 class ListingResource extends JsonResource
 {
@@ -31,6 +32,9 @@ class ListingResource extends JsonResource
             $location = $this->yachtaddress;
             if($location === NULL || $location === ''){
                 $location = "";
+            }
+            if($this->type === ListingTypes::TypeCustom){
+                $location = "Global";
             }
         return [
             "yachtid"=> $this->yachtid,

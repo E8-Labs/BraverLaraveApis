@@ -322,7 +322,7 @@ class UserAuthController extends Controller
 			        		        "dob" => $dob,
 			        		        "ssn" => $user->ssn,
 			        		        "zipcode"=>$user->zip,
-			        		        'work_locations[]' => $work_locations
+			        		        // 'work_locations[]' => $work_locations
 			        		    ];
 			        		    
 			        		    $json = $this->createCheckrCandidate($data);

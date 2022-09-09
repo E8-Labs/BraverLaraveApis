@@ -132,7 +132,7 @@ class ReportController extends Controller
         $api_key=env('chekrapikey');
         $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
         
-        $report_params = [ "candidate_id" => $candidatid,  "package" => "tasker_standard", 'work_locations[]' => $work_locations];
+        $report_params = [ "candidate_id" => $candidatid,  "package" => "tasker_standard"];//, 'work_locations[]' => $work_locations];
         // echo json_encode($report_params);
         // die();
         $curl = curl_init();
