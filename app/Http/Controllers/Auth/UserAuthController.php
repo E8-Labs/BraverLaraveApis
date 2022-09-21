@@ -312,11 +312,11 @@ class UserAuthController extends Controller
                         	if($user->dob){
                         	    // return ["date" => "". $user->dob];
                         	    $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
-                        	    $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
+                        	    // $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
         
                         	    $data = [
 			        		        "first_name" => $user->name,
-			        		        "last_name" => $user->last_name,
+			        		        "last_name" => $user->lastname,
 			        		        "phone" => $user->phone,
 			        		        "email" => $user->email,
 			        		        "dob" => $dob,
@@ -549,7 +549,7 @@ class UserAuthController extends Controller
        
        $user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
             
-
+       $checker_data = array();
 
         	if($request->has('image'))
         	{
@@ -605,6 +605,7 @@ class UserAuthController extends Controller
         	            'data' => null,
         	        ]);
         	    }
+        	    $checker_data["email"] = $email;
         	    $user->email = $email;
         	    // User::where('id', $user->id)->update(['email' => $email]);
         	}
@@ -612,6 +613,7 @@ class UserAuthController extends Controller
         	    $ssn = $request->ssn;
         	    $user->ssn = $ssn;
         	    $params["ssn"] = $ssn;
+        	    $checker_data["ssn"] = $ssn;
         	}
 
         	if($request->has('lat')){
@@ -629,22 +631,26 @@ class UserAuthController extends Controller
         	    $zipcode = $request->zipcode;
         	    $user->zip = $zipcode;
         	    $params["zip"] = $zipcode;
+        	    $checker_data["zipcode"] = $zipcode;
         	}
         	if($request->has('name')){
         	    $name = $request->name;
         	    $user->name = $name;
         	    $params["name"] = $name;
+        	    $checker_data["first_name"] = $name;
         	}
         	if($request->has('last_name')){
         	    $name = $request->last_name;
         	    $user->lastname = $name;
         	    $params["lastname"] = $name;
+        	    $checker_data["last_name"] = $name;
         	}
 	
         	if($request->has('phone')){
         	    $phone = $request->phone;
         	    $user->phone = $phone;
         	    $params["phone"] = $phone;
+        	    $checker_data["phone"] = $phone;
         	}
         	if($request->has('gender')){
         	    $phone = $request->gender;
@@ -655,6 +661,7 @@ class UserAuthController extends Controller
         	    $phone = $request->dob;
         	    $user->dob = $phone;
         	    $params["dob"] = $phone;
+        	    $checker_data["dob"] = $phone;
         	}
 
 
@@ -666,6 +673,12 @@ class UserAuthController extends Controller
 
         	$saved = $user->save();
         	if($saved){
+        		if($user->chekrcandidateid !== NULL){
+        			ReportController::updateCandidate($user->chekrcandidateid, $checker_data);
+        		}
+        		if($user->chekrreportid === NULL){
+        			$this->createChekrReport($request);
+        		}
         		return response()->json(['status' => (string)"1",
 					'message'=> 'User Updated',
 					'data' => new UserProfileFullResource($user), 
