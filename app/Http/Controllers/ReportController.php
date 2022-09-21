@@ -16,6 +16,23 @@ class ReportController extends Controller
 
   const CURRENCY = 'usd';
 
+
+  public static function updateCandidate($candidate_id, $data){
+    $api_key=env('chekrapikey');
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, 'https://api.checkr.com/v1/candidates' . '/' . $candidate_id);
+        curl_setopt($curl, CURLOPT_USERPWD, $api_key . ":");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+        $json = curl_exec($curl);
+        $http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        // echo $json;
+        // die();
+        return json_decode($json);
+  }
   public function createreport(Request $request) {
       $rules = ['userid' => 'required', ];
       $customMessages = [ 'required' => 'Please fill attribute :attribute' ];
