@@ -438,6 +438,24 @@ class ListingController extends Controller
                 ->orderBy('distance', 'ASC');
 
 			})
+			->when($request->has('search'), function($query) use($request){
+				$search = $request->search;
+                if($search != ''){
+                	$tokens = explode(" ", $search);
+                	// return $tokens;
+                    
+					$query->where(function($query) use($tokens){
+						foreach($tokens as $tok){
+
+							$query = $query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
+						}
+					});
+					
+
+                    // $users = $query->take(50)->skip($off_set)->get();
+                }
+
+			})
 			
 			->take(50)->skip($off_set)->get();
 			if(count($users) > 0 ){
@@ -445,34 +463,34 @@ class ListingController extends Controller
 					$users->splice(0, 0, [$featured]);
 				}
 			}
-			if($request->has('search')){
-				$search = $request->search;
-                if($search != ''){
-                	$tokens = explode(" ", $search);
-                	// return $tokens;
-                    $query = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
-                    ->when($request->has('lat'), function($query) use($request){
-						$lat = $request->lat;
-						$lang = $request->lang;
-						$query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
-                		->orderBy('distance', 'ASC');
+			// if($request->has('search')){
+			// 	$search = $request->search;
+   //              if($search != ''){
+   //              	$tokens = explode(" ", $search);
+   //              	// return $tokens;
+   //                  $query = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
+   //                  ->when($request->has('lat'), function($query) use($request){
+			// 			$lat = $request->lat;
+			// 			$lang = $request->lang;
+			// 			return $query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
+   //              		->orderBy('distance', 'ASC');
 
-					});
-					$query->where(function($query) use($tokens){
-						foreach($tokens as $tok){
+			// 		});
+			// 		$query->where(function($query) use($tokens){
+			// 			foreach($tokens as $tok){
 
-							$query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
-						}
-					});
+			// 				$query = $query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
+			// 			}
+			// 		});
 					
 
-                    $users = $query->take(50)->skip($off_set)->get();
-                }
+   //                  $users = $query->take(50)->skip($off_set)->get();
+   //              }
 				
-			}
-			else{
+			// }
+			// else{
 
-			}
+			// }
 
 			
 			if($users){
