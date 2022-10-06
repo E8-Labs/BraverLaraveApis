@@ -17,6 +17,7 @@ class MenuItemResource extends JsonResource
         return [
             "menuid"=> $this->menuid,
             "menutitle"=> $this->menutitle,
+            "menu_display_name"=> $this->menuDisplayName,
             "menuimage"=> \Config::get('constants.item_images_old') . $this->menuimage,
             "dateadded" => $this->dateadded,
             "menuheader"=> \Config::get('constants.item_images_old') . $this->menuheader,
