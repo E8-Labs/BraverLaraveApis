@@ -12,6 +12,7 @@ class CreateMenuTable extends Migration
 
 		$table->integer('menuid',11);
 		$table->string('menutitle',40);
+        $table->string('menuDisplayName',100);
 		$table->string('menuimage',50);
 		$table->timestamp('dateadded')->useCurrent();
 		$table->string('menuheader',40);
