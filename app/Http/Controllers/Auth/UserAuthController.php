@@ -116,7 +116,7 @@ class UserAuthController extends Controller
 			// 'phone' => 'required|unique:user',
 			'password' => 'required|string|max:40',
 			"apikey" => 'required',
-			'ssn' => 'required',
+			// 'ssn' => 'required',
 			'last_name' => 'required',
 
 				]);
@@ -201,7 +201,7 @@ class UserAuthController extends Controller
             if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/" . $folder ."/storage/app/Images/")){
                 Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/");
             }
-   			file_put_contents($filePath, $imageData);
+   			// file_put_contents($filePath, $imageData);
    			$user->url = "/". $folder. "/storage/app/Images/". $fileName;
 
 		}
@@ -232,12 +232,22 @@ class UserAuthController extends Controller
 			//send push
 			$profile = User::where('userid', $user_id)->first();
 			$user = $profile;
-
+			$candidate_id = $this->createCandidate($profile);
+			// echo "cand id " . $candidate_id;
+			$invitation = null;
+			if($candidate_id){
+				User::where('userid', $user_id)->update(['chekrcandidateid' => $candidate_id]);
+				// echo "Send invitation";
+				$invitation = ReportController::sendInvitation($candidate_id);
+				// echo "Invitation sent response";
+				 // return  ["invitation" => $invitation];
+			}
 			
 			   return response()->json([
 			   		'message' => 'User registered',
 			   		'status' => "1",
 			   		'data' => new UserProfileFullResource($profile),
+			   		"invitation" => $invitation
 			   ]);
 		    }
 		else
@@ -312,7 +322,7 @@ class UserAuthController extends Controller
                         	if($user->dob){
                         	    // return ["date" => "". $user->dob];
                         	    $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
-                        	    // $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
+                        	    $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
         
                         	    $data = [
 			        		        "first_name" => $user->name,
@@ -320,25 +330,32 @@ class UserAuthController extends Controller
 			        		        "phone" => $user->phone,
 			        		        "email" => $user->email,
 			        		        "dob" => $dob,
-			        		        "ssn" => $user->ssn,
+			        		        // "ssn" => $user->ssn,
 			        		        "zipcode"=>$user->zip,
-			        		        // 'work_locations[]' => $work_locations
+			        		        'work_locations[]' => $work_locations
+			        		        // "work_locations[][city]" => "Lahore",
+                     //         		"work_locations[][country]" => "PK",
 			        		    ];
 			        		    
 			        		    $json = $this->createCheckrCandidate($data);
 			        		   // echo json_encode($json);
-			        		    if(array_key_exists('id', $json)){
-			        		    	$user->chekrcandidateid = $json['id'];
+			        		    if($json){
+									if(array_key_exists('id', $json)){
+			        		    		$user->chekrcandidateid = $json['id'];
 			        		        
-			        		    	User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
-									return $json['id'];
+			        		    		User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
+										return $json['id'];
 	
+			        		    	}
+			        		    	else{
+	                    	       	 	$chekr_error = $json['error'];
+	                    	        	echo json_encode($json);
+	                    	        	// die();
+	                    	        	return NULL;
+			        		    	}
 			        		    }
 			        		    else{
-	                    	        $chekr_error = $json['error'];
-	                    	        // echo json_encode($json);
-	                    	        // die();
-	                    	        return NULL;
+			        		    	return NULL;
 			        		    }
                         	}
                         	else{

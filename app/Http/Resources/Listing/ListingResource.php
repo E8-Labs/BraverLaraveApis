@@ -41,6 +41,7 @@ class ListingResource extends JsonResource
             "yachtname"=> $this->yachtname,
             "yachtdescription"=> $this->yachtdescription,
             "yachtprice"=> $this->yachtprice,
+            "weekly_price"=> $this->weekly_price,
             "price_full_day"=> $this->price_full_day,
             "yachtaddress"=> $location,
             "yachtweburl"=> $this->yachtweburl,

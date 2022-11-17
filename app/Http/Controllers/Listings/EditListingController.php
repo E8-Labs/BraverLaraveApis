@@ -90,6 +90,17 @@ class EditListingController extends Controller
 		if($request->has('price')){
 			$listing->yachtprice = $request->price;
 		}
+
+		if($request->has('weekly_price')){
+			$listing->weekly_price = $request->weekly_price;
+			if($request->weekly_price == NULL){
+			    $listing->weekly_price = '';
+			}
+		}
+		else{
+			$listing->weekly_price = '';
+		}
+		
 		if($request->has('eventdate')){
 			$listing->eventdate = $request->eventdate;
 		}
