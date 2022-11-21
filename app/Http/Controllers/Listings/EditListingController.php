@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Listings;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Listings\ListingController;
+
 use Illuminate\Http\Request;
 
 use App\Models\Auth\User;
@@ -57,7 +59,10 @@ class EditListingController extends Controller
 
 
 		if($request->has('yachtname')){
-			$listing->yachtname = $request->yachtname;
+			// $listing->yachtname = $request->yachtname;
+			$name = $request->yachtname;
+			$name = str_replace(ListingController::PercentageEncode, "%", $name);
+			$listing->yachtname = $name;
 		}
 
 		if($request->has('address')){
@@ -78,7 +83,10 @@ class EditListingController extends Controller
 // 					'data' => null, 
 // 				]);
 // 			}
-			$listing->yachtdescription = $request->yachtdescription;
+			$description = $request->yachtdescription;
+			$description = str_replace(ListingController::PercentageEncode, "%", $description);
+			$listing->yachtdescription = $description;
+			// $listing->yachtdescription = $request->yachtdescription;
 		}
 		
 		if($request->has('phone')){

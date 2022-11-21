@@ -24,6 +24,7 @@ use Carbon\Carbon;
 class ListingController extends Controller
 {
 
+	const PercentageEncode = "Bra_Ver_Per_Cent_Encoded_Sign_0192873";
 	function addListing(Request $request){
 		$validator = Validator::make($request->all(), [
 			'yachtname' => 'required',
@@ -67,10 +68,14 @@ class ListingController extends Controller
 		else{
 			$listing->addedby = '';
 		}
-		$listing->yachtname = $request->yachtname;
+		$name = $request->yachtname;
+		$name = str_replace(ListingController::PercentageEncode, "%", $name);
+		$listing->yachtname = $name;
 		
 		$listing->dateadded = Carbon::now()->toDateTimeString();
-		$listing->yachtdescription = $request->yachtdescription;
+		$description = $request->yachtdescription;
+		$description = str_replace(ListingController::PercentageEncode, "%", $description);
+		$listing->yachtdescription = $description;
 		
 		
 		
