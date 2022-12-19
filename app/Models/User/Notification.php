@@ -43,7 +43,7 @@ public static function add(int $notification_type, string $from_user, string $to
     public function Push_Notification($token,$data) {
         try{
 
-        	$API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
+            $API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
 
             $fcmUrl = 'https://fcm.googleapis.com/fcm/send';
             
@@ -82,8 +82,8 @@ public static function add(int $notification_type, string $from_user, string $to
 
     public static function sendFirebasePushNotification(Notification $notification)
     {
-    	\Log::info($notification);
-    	$API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
+        \Log::info($notification);
+        $API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
         $sendToUser = User::where('userid', $notification->to_user)->first();
         if (isset($sendToUser->fcmtoken) && $sendToUser->fcmtoken)
         {
@@ -173,7 +173,13 @@ public static function add(int $notification_type, string $from_user, string $to
                 if($res){
                     $yid = $res->yachtid;
                     $yacht = Listing::where('yachtid', $yid)->first();
-                    $message = " request to reserver ". $yacht->type . " (". $yacht->yachtname . ")";
+                    if($yacht){
+                        $message = " request to reserve ". $yacht->type . " (". $yacht->yachtname . ")";
+                    }
+                    else{
+                        $message = " request to reserve ". $yid;
+                    }
+                    
                 }
                 break;
             case NotificationTypes::InvoicePaid:

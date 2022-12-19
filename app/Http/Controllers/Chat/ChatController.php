@@ -427,7 +427,7 @@ class ChatController extends Controller
 	function uploadChatImage(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
-			"userid" => 'required',
+// 			"userid" => 'required',
 			"image" => 'required',
 
 				]);
@@ -647,10 +647,10 @@ class ChatController extends Controller
 			}
 			else{
 				// update unread count
-				return response()->json(['status' => "0",
-					'message'=> 'No chat users',
-					'request' => $request->all(), 
-				]);
+				// return response()->json(['status' => "0",
+				// 	'message'=> 'No chat users',
+				// 	'request' => $request->all(), 
+				// ]);
 				if($updateother == "0"){
 
 					ChatUser::where('chatid', $chatid)->where('userid', $fromid)->update(['unreadcount' => 0]);
