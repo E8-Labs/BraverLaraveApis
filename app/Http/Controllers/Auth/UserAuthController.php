@@ -795,7 +795,7 @@ class UserAuthController extends Controller
 				// $profile = Profiles::where('user_id', $user->id)->first();
 				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
-				Mail::send('Mail/Welcome', $data, function ($message) use ($data) {
+				Mail::send('Mail/Welcome', $data, function ($message) use ($data, $user) {
 					//send to $user->email
                         $message->to($user->email,'Welcome')->subject('Welcome to Braver');
                         $message->from($data['user_email']);
