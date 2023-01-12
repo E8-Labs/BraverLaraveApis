@@ -10,6 +10,7 @@ use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use Illuminate\Support\Facades\Mail;
 
 
 use Illuminate\Support\Facades\Hash;
@@ -201,9 +202,16 @@ class UserAuthController extends Controller
             if(!Storage::exists($_SERVER['DOCUMENT_ROOT']."/" . $folder ."/storage/app/Images/")){
                 Storage::makeDirectory($_SERVER['DOCUMENT_ROOT']."/". $folder ."/storage/app/Images/");
             }
-   			// file_put_contents($filePath, $imageData);
+   			file_put_contents($filePath, $imageData);
    			$user->url = "/". $folder. "/storage/app/Images/". $fileName;
 
+		}
+		else{
+		    return response()->json(['status' => "0",
+					'message'=> 'Image not added',
+					'data' => null, 
+					'error' => 'error',
+				]);
 		}
 		
 		$user->password=Hash::make($req->password);
@@ -242,7 +250,7 @@ class UserAuthController extends Controller
 				// echo "Invitation sent response";
 				 // return  ["invitation" => $invitation];
 			}
-			
+			$this->sendWelcomeEmail($user);
 			   return response()->json([
 			   		'message' => 'User registered',
 			   		'status' => "1",
@@ -780,5 +788,20 @@ class UserAuthController extends Controller
 				]);
 			}
         }
+
+
+        function sendWelcomeEmail(User $user = null){
+		
+				// $profile = Profiles::where('user_id', $user->id)->first();
+				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/Welcome', $data, function ($message) use ($data) {
+					//send to $user->email
+                        $message->to($user->email,'Welcome')->subject('Welcome to Braver');
+                        $message->from($data['user_email']);
+                    });
+
+				return true;
+	}
 		
 }
