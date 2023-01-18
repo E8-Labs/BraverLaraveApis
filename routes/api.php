@@ -12,6 +12,8 @@ use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuthForgotPasswordController;
 
+use App\Http\Controllers\Auth\SocialLoginController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +47,13 @@ Route::post("checkcode",[UserAuthController::class,'checkCode']);
 Route::post("checkphone",[UserAuthController::class,'checkPhoneExists']);
 Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);
+
+Route::post("check_social_Login_exists",[SocialLoginController::class,'isSocialLoginAccountExists']);
+Route::post("register_social", [SocialLoginController::class, 'RegisterUserWithSocial']);
+
+
+
+
 Route::post("deleteuser",[UserController::class,'deleteUser']);
 Route::post("updateuser",[UserAuthController::class,'updateUser']);
 Route::post("updateinvitecode",[UserAuthController::class,'updateInviteCode']);

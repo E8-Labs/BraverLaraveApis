@@ -389,7 +389,15 @@ class ChatController extends Controller
 				return $query->where('chatforproduct', $chatforproduct);
 			})
 			->when($request->has('chattype'), function($query) use ($chattype){
-				$query->where('chattype', $chattype);
+				
+				if($chattype == "Proper"){
+				    $query->where('chattype', $chattype)->orWhere(function($query) use($chattype){
+				        $query->where('chattype', 'ReservationRequest')->where('chatforproduct', 'Custom');
+				    });
+				}
+				else{
+				    $query->where('chattype', $chattype);
+				}
 			})
 			->when($request->has('status'), function($query) use ($status){
 				// $status = $request->status;

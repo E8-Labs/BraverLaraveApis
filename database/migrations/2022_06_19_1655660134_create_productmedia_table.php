@@ -20,7 +20,7 @@ class CreateProductmediaTable extends Migration
 		$table->timestamp('dateadded')->useCurrent();
 		$table->string('baseUrl',10)->default('Old');
 		
-		$table->integer('sorter',11)->default(0);
+		$table->integer('sorter')->default(0);
 
         });
     }

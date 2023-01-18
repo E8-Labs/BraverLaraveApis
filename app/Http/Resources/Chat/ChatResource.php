@@ -28,7 +28,7 @@ class ChatResource extends JsonResource
         $users = User::whereIn('userid', $chatUserIds)->get();
         return [
             "chatid" => $this->chatid,
-            'reservationid' => $res->reservationid,
+            'reservationid' => $res != null ? $res->reservationid : null,
             'reservation' => $res,
             "productid" => $this->productid,
             "dateadded" => $this->dateadded,

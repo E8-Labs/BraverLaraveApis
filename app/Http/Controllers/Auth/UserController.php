@@ -212,10 +212,10 @@ class UserController extends Controller
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
-			$users = User::where('accountstatus', AccountStatus::Pending)->where('role', "!=", UserType::TypeAdmin)->take(50)->skip($off_set)->get();
+			$users = User::where('accountstatus', AccountStatus::Pending)->where('role', "!=", UserType::TypeAdmin)->where('role', "!=", 'TEAM')->take(50)->skip($off_set)->get();
 			if($request->has('search')){
 				$search = $request->search;
-				$users = User::where('accountstatus', AccountStatus::Pending)->where('name', 'LIKE', "%$search%")->where('role', "!=", UserType::TypeAdmin)->take(50)->skip($off_set)->get();
+				$users = User::where('accountstatus', AccountStatus::Pending)->where('name', 'LIKE', "%$search%")->where('role', "!=", UserType::TypeAdmin)->where('role', "!=", 'TEAM')->take(50)->skip($off_set)->get();
 			}
 			else{
 
@@ -262,10 +262,10 @@ class UserController extends Controller
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
-			$users = User::where('accountstatus', AccountStatus::Approved)->where('role', "!=", 'ADMIN')->take(50)->skip($off_set)->get();
+			$users = User::where('accountstatus', AccountStatus::Approved)->where('role', "!=", 'ADMIN')->where('role', "!=", 'TEAM')->take(50)->skip($off_set)->get();
 			if($request->has('search')){
 				$search = $request->search;
-				$users = User::where('accountstatus', AccountStatus::Approved)->where('name', 'LIKE', "%$search%")->where('role', "!=", 'ADMIN')->take(50)->skip($off_set)->get();
+				$users = User::where('accountstatus', AccountStatus::Approved)->where('name', 'LIKE', "%$search%")->where('role', "!=", 'ADMIN')->where('role', "!=", 'TEAM')->take(50)->skip($off_set)->get();
 			}
 			else{
 
