@@ -243,6 +243,17 @@ class ChatController extends Controller
                 	$data["chatid"] = $chat->chatid;
                 	// $this->Push_Notification($token, $data);
 					Notification::add(NotificationTypes::TypeReservation, $request->fromuser, $admin->userid, $res);
+
+					$yacht = Listing::where('yachtid', $$yachtid)->first();
+					$yachtname = "";
+					if($yacht){
+						$yachtname = $yacht->yachtname;
+					}
+					else{
+						$yachtname = $request->chatforproduct;
+					}
+					$this->sendReservationEmail($from, $yachtname);
+
 					return response()->json(['status' => "1",
 						'message'=> 'Chat created',
 						'data' => new ChatResource($chat), 
@@ -264,6 +275,20 @@ class ChatController extends Controller
 					'data' => null, 
 				]);
 			}
+	}
+
+	function sendReservationEmail(User $user = null, $yacht_name){
+		
+				// $profile = Profiles::where('user_id', $user->id)->first();
+				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "", "yacht_name" => $yacht_name);
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/ReservationRequestMail', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to("salmanmajid14@gmail.com",'Reservation')->subject('New Reservation Request');
+                        $message->from($data['user_email']);
+                    });
+
+				return true;
 	}
 
 	public function getChatById(Request $request){
@@ -383,6 +408,13 @@ class ChatController extends Controller
             $status = $request->status;
             // return $chatforproduct;
             $chatids = ChatUser::where('userid', $userid)->pluck('chatid')->toArray();
+            // return $chatids;
+            if(count($chatids) === 0){
+                return response()->json(['status' => "0",
+					'message'=> 'No chats',
+					'data' => null, 
+				]);
+            }
 			$chats = ChatThread::whereIn('chatid', $chatids)
 			->when($request->has('chatforproduct'), function($query) use ($chatforproduct){
 			 //   return $chatforproduct;

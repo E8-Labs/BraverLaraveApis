@@ -250,7 +250,7 @@ class ListingController extends Controller
 			\Log::info($e);
 			\Log::info("-------------------------------Listing Add Exception End---------------------------------");
 		    return response()->json(['status' => false,
-					'message'=> 'Listing  not added',
+					'message'=> 'Listing  not added. '. $e->getMessage(),
 					'error' => $e->getMessage(),
 					'data'=> null,
 
@@ -401,7 +401,7 @@ class ListingController extends Controller
 	}	
 
 
-	private function saveImage($url, $listing_id = -1, $media_title, $media_type){
+	private function saveImage($url, $listing_id, $media_title, $media_type){
 		$listing_image= new ListingImage();
 		// $listing_image->mediaid = uniqid();
 		$listing_image->mediatitle = $media_title;
@@ -724,7 +724,7 @@ class ListingController extends Controller
 }
 
 
-
+// $2y$10$oWst/k8n.GyQc8Dn90HvieHSZTDwN./p2UZBBSbB3kig.DmWSagxW
 
 
 

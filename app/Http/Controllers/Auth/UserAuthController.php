@@ -802,6 +802,6 @@ class UserAuthController extends Controller
                     });
 
 				return true;
-	}
+		}
 		
 }

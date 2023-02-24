@@ -109,7 +109,7 @@ class AuthForgotPasswordController extends Controller
                       ->update(['password' => Hash::make($request->password)]);
  
           DB::table('password_resets')->where(['email'=> $request->email])->delete();
-            return view('auth.passwords.forgetPasswordLink', ['token' => $request->token]);
+            return view('auth.passwords.passwordResetSuccess', ['token' => $request->token]);
           // return redirect('/login')->with('message', 'Your password has been changed!');
       }
       

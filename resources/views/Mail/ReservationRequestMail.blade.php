@@ -20,8 +20,8 @@
             <a href="http://braverhospitalityapp.com"><img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality" style="width:90px;height:90px;"></a>
     </center>
 
-<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px">Hey  <strong>{{$user_name}} </strong>,  </p>
-<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px">  <strong>Braver</strong>: is honored to welcome you to our members only platform. We look forward to providing you with the finest hospitality, while granting you exclusive access to our connections. We’re here to benefit your lifestyle! Please feel free to reach out at anytime. </p>
+<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px">Hey <strong>Braver</strong>,  You have a reservation request from <strong> {{$user_name}} </strong>,  to reserve <strong>{{$yacht_name}}</strong>. </p>
+
 <br/>
 <br/>
 
