@@ -15,5 +15,6 @@ class NotificationTypes extends Model
     const AdminBroadcast = 5;
     const TypeReservationCancelled = 6;
     const TeamMemberReservationInvite = 7;
+    const AccountApproved = 8;
 
 }

@@ -21,7 +21,7 @@
     </center>
 
 <p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px">Hey  <strong>{{$user_name}} </strong>,  </p>
-<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px">  <strong>Braver</strong>: is honored to welcome you to our members only platform. We look forward to providing you with the finest hospitality, while granting you exclusive access to our connections. We’re here to benefit your lifestyle! Please feel free to reach out at anytime. </p>
+<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px">  <strong>Braver</strong>: assigned you to a new reservation request from a client. checkout the braver app for interacting with the customer. </p>
 <br/>
 <br/>
 

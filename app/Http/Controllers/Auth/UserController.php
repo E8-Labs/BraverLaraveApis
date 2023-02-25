@@ -8,6 +8,7 @@ use App\Models\Auth\User;
 use App\Models\Auth\UserType;
 use App\Models\Auth\AccountStatus;
 use Illuminate\Support\Facades\Validator;
+use App\Models\NotificationTypes;
 
 use App\Http\Resources\User\UserProfileFullResource;
 use App\Http\Resources\User\UserProfileLiteResource;
@@ -160,19 +161,20 @@ class UserController extends Controller
 			    $user->accountstatus = AccountStatus::Approved;
 			    $user->role = $request->role;
 			    $saved = $user->save();
-			if($saved){
-				
-				return response()->json(['status' => "1",
-					'message'=> 'User approved',
-					'data' => new UserProfileFullResource($user), 
-				]);
-			}
-			else{
-				return response()->json(['status' => "0",
-					'message'=> 'Error approving user',
-					'data' => null, 
-				]);
-			}
+				if($saved){
+					$admin = User::where('role', 'ADMIN')->first();
+					Notification::add(NotificationTypes::AccountApproved, $user->id, $admin->userid, $user);
+					return response()->json(['status' => "1",
+						'message'=> 'User approved',
+						'data' => new UserProfileFullResource($user), 
+					]);
+				}
+				else{
+					return response()->json(['status' => "0",
+						'message'=> 'Error approving user',
+						'data' => null, 
+					]);
+				}
 			}
 			catch(\Exception $e){
 			    \Log::info('---------------- Exception approving  start----------------------');

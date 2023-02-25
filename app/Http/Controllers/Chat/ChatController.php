@@ -22,6 +22,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Listing;
+
+
 
 use Carbon\Carbon;
 
@@ -110,6 +114,33 @@ class ChatController extends Controller
 			// 				'data' => new ChatResource($chat), 
 			// 			]);
 			// 		}
+			$yachtid = $request->productid;
+			if($yachtid == null){
+				$yachtid = '';
+			}
+			
+// 			$from = User::where('userid', $request->fromuser)->first();
+			
+// 					try{
+// 					    $yacht = Listing::where('yachtid', $yachtid)->first();
+// 					}
+// 					catch(\Exception $ex){
+// 					    return $ex->getMessage();
+// 					}
+					
+// 					$yachtname = "";
+// 					if($yacht){
+// 						$yachtname = $yacht->yachtname;
+// 					}
+// 					else{
+// 						$yachtname = $request->chatforproduct;
+// 					}
+// 				// 	return "Yacht name " . $yachtname;
+// 					$this->sendReservationEmail($from, $yachtname);
+// 					return response()->json(['status' => "0",
+// 					'message'=> 'Mail sent',
+// 					'data' => null, 
+// 				]);
 
 
 			DB::beginTransaction();
@@ -119,10 +150,7 @@ class ChatController extends Controller
 
 			$user = User::where('userid', $request->fromuser)->first();
 
-			$yachtid = $request->productid;
-			if($yachtid == null){
-				$yachtid = '';
-			}
+			
 
 			$chat = new ChatThread();
 			$chat->chatid = uniqid();
@@ -244,7 +272,7 @@ class ChatController extends Controller
                 	// $this->Push_Notification($token, $data);
 					Notification::add(NotificationTypes::TypeReservation, $request->fromuser, $admin->userid, $res);
 
-					$yacht = Listing::where('yachtid', $$yachtid)->first();
+					$yacht = Listing::where('yachtid', $yachtid)->first();
 					$yachtname = "";
 					if($yacht){
 						$yachtname = $yacht->yachtname;
@@ -661,7 +689,9 @@ class ChatController extends Controller
 					   //         'user' => $u, 
 					   //         'saved' => $saved,
 				    //         ]);
+					    	$team = User::where('userid', $u["userid"])->first();
 					    	$not = Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u["userid"], $chat, '');
+					    	$this->sendChatInviteEmail($team);
 					    	$chat = ChatThread::where('chatid', $chatid)->first();
 					    	return response()->json(['status' => "1",
 					            'message'=> 'Users added ',
@@ -720,6 +750,33 @@ class ChatController extends Controller
 				]);
 			}
 
+	}
+
+
+	function sendChatInviteEmail(User $user = null){
+		
+				// $profile = Profiles::where('user_id', $user->id)->first();
+				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to("salmanmajid14@gmail.com",'Welcome')->subject('Manage new reservation');
+                        $message->from($data['user_email']);
+                    });
+
+				return true;
+	}
+
+	function sendInvite(Request $request){
+		$user = Auth::user();
+		$user = User::where('userid', $user->id)->first();
+		$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to($user->email,'Welcome')->subject('Manage new reservation');
+                        $message->from($data['user_email']);
+                    });
 	}
 
 	function getUnreadNotifications(Request $request){
