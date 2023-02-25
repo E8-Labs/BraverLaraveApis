@@ -760,7 +760,7 @@ class ChatController extends Controller
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
-                        $message->to("salmanmajid14@gmail.com",'Welcome')->subject('Manage new reservation');
+                        $message->to($user->email,'Welcome')->subject('Manage new reservation');
                         $message->from($data['user_email']);
                     });
 
