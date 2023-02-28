@@ -768,8 +768,8 @@ class ChatController extends Controller
 	}
 
 	function sendInvite(Request $request){
-		$user = Auth::user();
-		$user = User::where('userid', $user->id)->first();
+		// $user = Auth::user();
+		$user = User::where('userid', $request->userid)->first();
 		$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {

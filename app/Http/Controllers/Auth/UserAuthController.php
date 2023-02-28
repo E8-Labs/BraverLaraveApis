@@ -118,7 +118,7 @@ class UserAuthController extends Controller
 			'password' => 'required|string|max:40',
 			"apikey" => 'required',
 			// 'ssn' => 'required',
-			'last_name' => 'required',
+			// 'last_name' => 'required',
 
 				]);
 
@@ -163,6 +163,9 @@ class UserAuthController extends Controller
 		}
 		if($req->has('last_name')){
 			$user->lastname = $req->last_name;
+		}
+		else{
+			$user->lastname = "";
 		}
 		$user->email=$req->email;
 		$role = UserType::TypeUser;
