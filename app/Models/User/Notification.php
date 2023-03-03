@@ -150,7 +150,7 @@ public static function add(int $notification_type, string $from_user, string $to
                 $title = "Reservation invitation";
                 break;
             case NotificationTypes::AccountApproved:
-                $title = "Account Approved";
+                $title = "Congrats";
                 break;
             
         }
