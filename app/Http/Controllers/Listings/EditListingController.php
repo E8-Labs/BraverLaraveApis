@@ -108,6 +108,16 @@ class EditListingController extends Controller
 		else{
 			$listing->weekly_price = '';
 		}
+
+		if($request->has('fulldayprice')){
+			$listing->price_full_day = $request->fulldayprice;
+			if($request->fulldayprice == NULL){
+			    $listing->price_full_day = '';
+			}
+		}
+		else{
+		    $listing->price_full_day = '';
+		}
 		
 		if($request->has('eventdate')){
 			$listing->eventdate = $request->eventdate;
