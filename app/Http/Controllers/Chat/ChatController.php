@@ -308,11 +308,11 @@ class ChatController extends Controller
 	function sendReservationEmail(User $user = null, $yacht_name){
 		
 				// $profile = Profiles::where('user_id', $user->id)->first();
-				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "", "yacht_name" => $yacht_name);
+				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "", "yacht_name" => $yacht_name);
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/ReservationRequestMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
-                        $message->to("admin@braverhospitality.com",'Reservation')->subject('New Reservation Request');
+                        $message->to("info@braverhospitality.com",'Reservation')->subject('New Reservation Request');
                         $message->from($data['user_email']);
                     });
 
@@ -756,7 +756,7 @@ class ChatController extends Controller
 	function sendChatInviteEmail(User $user = null){
 		
 				// $profile = Profiles::where('user_id', $user->id)->first();
-				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
@@ -770,7 +770,7 @@ class ChatController extends Controller
 	function sendInvite(Request $request){
 		// $user = Auth::user();
 		$user = User::where('userid', $request->userid)->first();
-		$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
+		$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
