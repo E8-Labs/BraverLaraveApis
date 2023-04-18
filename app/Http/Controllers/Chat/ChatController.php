@@ -386,7 +386,7 @@ class ChatController extends Controller
 			$off_set = $page * $ListSize - $ListSize;
 
 			$chatids = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
-			$chats = ChatThread::whereIn("chatid", $chatids)->skip($off_set)->take($ListSize)->get();
+			$chats = ChatThread::whereIn("chatid", $chatids)->skip($off_set)->take($ListSize)->orderBy('updatedat', 'DESC')->get();
 			if($chats){
 				return response()->json(['status' => "1",
 					'message'=> 'Chats obtained',
@@ -609,6 +609,7 @@ class ChatController extends Controller
 			if($request->has('lastmessage')){
 				$lastmessage = $request->lastmessage;
 				$chat->lastmessage = $request->lastmessage;
+				$chat->updatedat = Carbon::now()->toDateTimeString();
 				// $not->title = "Notification";
 				// $not = new Notification;
 				// $not->from_user = $fromid;

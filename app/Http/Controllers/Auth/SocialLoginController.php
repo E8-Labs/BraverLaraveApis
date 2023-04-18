@@ -170,6 +170,7 @@ class SocialLoginController extends Controller
 		$validator = Validator::make($request->all(), [
 			'provider_id' => 'required|string',
 			'provider_name' =>'required|string',
+// 			'email' => 'required'
 				]);
 
 			if($validator->fails()){
@@ -184,56 +185,85 @@ class SocialLoginController extends Controller
 			
 
 			$user = User::where('provider_id', $loginid)->first();
+
 			
 			if ($user == null){
-				// $user =  User::create([
-    //         		'provider_name' => $provider_name,
-    //         		'provider_id' => $loginid,
-    //         		'email' => $email,
-    //         		"password" => Hash::make($loginid),
-    //     		]);
-    //     		$token = JWTAuth::fromUser($user);
-				return response()->json([
-					'message'=> "Account doesn't exist ". $loginid,
-					'status' =>  "0",
-					'data'   => null,
-					]);
+				// return response()->json([
+				// 	'message'=> "Account doesn't exist ". $loginid,
+				// 	'status' =>  false,
+				// 	'data'   => null,
+				// 	]);
 			}
-			else{
-			    $email = $user->email;
+			{
+			    $email = $request->email;
 			    if($email == ''){
 			        $email = $this->getEmailForSocialLogin($request);
 			    }
+
+
+			    $exists = User::where('email', $email)->first();
+			    // echo "Email " . $email;
+				if($exists){
+		            if( ($exists->provider_name == 'facebook' && $request->provider_name == 'facebook') || ($exists->provider_name == 'google' && $request->provider_name == 'google') || ($exists        ->provider_name == 'apple' && $request->provider_name == 'apple') ){
+		        	// the user is trying to login
+		            }
+		        	else{
+		        	    return response()->json(['status' => "0",
+		        			'message'=> 'Email already exists',
+		        			'socialStatus' => 'EmailAlreadyExistsWithDifferentProvider',
+		        			'data' => null, 
+		        		]);
+		        	}
+		        }
+		        
+		        else{
+		        	return response()->json(['status' => "0",
+		        			'message'=> 'Email is available',
+		        			'socialStatus' => 'EmailAvailable',
+		        			'data' => null, 
+		        		]);
+		        }
+
+
 				
 				$credentials = ["email" => $email, "password" => $loginid];
 				// $credentials = $request->only('email', 'password');
 
         		
-				// try
-				// {
-				// 	$token = Auth::login($user);
-				// 	if(!$token )
-				// 	{
-				// 		return response()->json([
-				// 			'message' =>'Invalid_Credentials',
-				// 			'status' =>"0",
-				// 			'data' => $credentials,
-				// 		]);
-				// 	}
-				// }
-				// catch (JWTException $e)
-				// {
-				// 	return response()->json([
-				// 	'message' => 'Could not create token '. $e->getMessage(),
-				// 	'status'=>"0"]);
-				// }
+				try
+				{
+					$token = Auth::login($user);
+					if(!$token )
+					{
+						return response()->json([
+							'message' =>'Invalid_Credentials',
+							'status' =>"0",
+							'data' => $credentials,
+						]);
+					}
+				}
+				catch (JWTException $e)
+				{
+					return response()->json([
+					'message' => 'Could not create token '. $e->getMessage(),
+					'status'=>"0"]);
+				}
 
-				
+				$id = $user->id;
+
+				$profile = Profile::where('user_id', $id)->first();
+				$data = ["access_token" => $token];
+				if ($profile == null){
+					$data["profile"] = null; // means user is just regisetered his details are missing
+				}
+				else{
+					$data["profile"] = new UserProfileFullResource($profile);
+				}
 				
 					return response()->json([
 					'message'=> 'Account logged in',
 					'status' =>  "1",
-					'data'   =>  new UserProfileFullResource($user)
+					'data'   => $data
 					]);
 			}
 	}

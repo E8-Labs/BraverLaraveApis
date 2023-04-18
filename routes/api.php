@@ -56,6 +56,7 @@ Route::post("register_social", [SocialLoginController::class, 'RegisterUserWithS
 
 Route::post("deleteuser",[UserController::class,'deleteUser']);
 Route::post("updateuser",[UserAuthController::class,'updateUser']);
+Route::post("redeem_code",[UserAuthController::class,'redeemOfferCode']);
 Route::post("updateinvitecode",[UserAuthController::class,'updateInviteCode']);
 Route::post("approveuser",[UserController::class,'approveUser']);
 

@@ -10,6 +10,8 @@ use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use App\Models\User\OfferCodeSubscription;
+use App\Models\User\UserOfferCodeSubscription;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -288,6 +290,47 @@ class UserAuthController extends Controller
 				]);
 		}
 		 
+		}
+
+
+		function redeemOfferCode(Request $request){
+			$code = $request->offer_code;
+			//check code exists
+			$exists = OfferCodeSubscription::where('offer_code', $code)->first();
+			if(!$exists){
+				return response()->json(['status' => "0",
+					'message'=> 'Invalid offer code',
+					'data' => null, 
+				]);
+			}
+
+			//check if user is  already redeemed the code
+			$redeemed = UserOfferCodeSubscription::where('user_id', $reqeust->userid)->first();
+			if($exists){
+				return response()->json(['status' => "0",
+					'message'=> 'Already redeemed the code',
+					'data' => null, 
+				]);
+			}
+
+			$ucode = new UserOfferCodeSubscription;
+			$ucode->offer_code = $code;
+			$ucode->userid = $request->userid;
+			$saved = $ucode->save();
+			if($saved){
+				$profile = User::where('userid', $request->userid)->first();
+				return response()->json(['status' => "1",
+					'message'=> 'Code Redeemed',
+					'data' => new UserProfileFullResource($profile), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Error redeeming the code',
+					'data' => null, 
+				]);
+			}
+
 		}
 
 
@@ -796,7 +839,7 @@ class UserAuthController extends Controller
         function sendWelcomeEmail(User $user = null){
 		
 				// $profile = Profiles::where('user_id', $user->id)->first();
-				$data = array('user_name'=> $user->name, "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/Welcome', $data, function ($message) use ($data, $user) {
 					//send to $user->email
