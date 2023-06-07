@@ -45,6 +45,11 @@ class BirthdayCron extends Command
             }
             else{
                 \Log::info("Bday is " . $bday);
+                $date = Carbon::now()->format('m/d/Y');
+                if($date === $bday){
+                    //send email
+                    \Log::info("Email should be sent for BDay");
+                }
             }
         }
     }
