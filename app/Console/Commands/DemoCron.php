@@ -54,8 +54,35 @@ class DemoCron extends Command
             $this->checkReport($user);
         }
 
-
+    $this->CheckForBDays();
         // return 0;
+    }
+    
+    private function CheckForBDays(){
+        \Log::info("Cron BDay is working fine!");
+        $users = User::get();
+                    
+        foreach($users as $user){
+            $bday = $user->dob;
+            if($bday === NULL || $bday === ""){
+                \Log::info("Bday is not added");
+            }
+            else{
+                \Log::info("Bday is " . $bday);
+                $date = Carbon::now()->addWeeks(2)->format('m/d');
+                if(strpos($bday, $date) === 0){
+                    //send email
+                    \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
+                    $data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+            // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+                Mail::send('Mail/bdayemail', $data, function ($message) use ($data, $user) {
+                    //send to $user->email
+                        $message->to("salmanmajid14@gmail.com",'Birthday')->subject('Happy Birthday');
+                        $message->from($data['user_email']);
+                    });
+                }
+            }
+        }
     }
 
 
