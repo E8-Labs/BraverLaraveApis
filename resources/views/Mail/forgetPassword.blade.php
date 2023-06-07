@@ -20,7 +20,9 @@
 		<h2 style="text-align:center;color: black;">Hi, {{ $name }}</h2>
 		<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px"> You recently requested to reset your password for your  <strong>Braver Hospitality App</strong> account. Use the button below to reset it</p>
 		<br><br>
-        <a  href="{{ route('reset.password.get', $code) }}"><button style="margin-left:38%;border:none; border-radius: 4px; height:40px; width: 153px; background:#00C7B2;color: white">RESET PASSWORD</button></a>
+		<center>
+        <a  href="{{ route('reset.password.get', $code) }}"><button style="border:none; border-radius: 4px; height:40px; width: 153px; background:#00C7B2;color: white">RESET PASSWORD</button></a>
+        </center>
 
 		<br><br><br>
 		<hr style="width: 92%;">
