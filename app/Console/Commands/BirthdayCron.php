@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ReportController;
 use App\Models\Auth\User;
+use App\Models\User\BDayWish;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 

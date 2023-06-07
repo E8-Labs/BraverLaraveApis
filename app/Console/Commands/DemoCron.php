@@ -7,8 +7,11 @@ use Illuminate\Console\Command;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ReportController;
 use App\Models\Auth\User;
+use App\Models\User\BDayWish;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
+
+use Illuminate\Support\Facades\Mail;
 
 use Carbon\Carbon;
 
@@ -70,16 +73,31 @@ class DemoCron extends Command
             else{
                 \Log::info("Bday is " . $bday);
                 $date = Carbon::now()->addWeeks(2)->format('m/d');
+                $year = Carbon::now()->addWeeks(2)->format('Y');
                 if(strpos($bday, $date) === 0){
-                    //send email
-                    \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
-                    $data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
-            // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
-                Mail::send('Mail/bdayemail', $data, function ($message) use ($data, $user) {
-                    //send to $user->email
-                        $message->to("salmanmajid14@gmail.com",'Birthday')->subject('Happy Birthday');
-                        $message->from($data['user_email']);
-                    });
+
+                    $alreadyWished = BDayWish::where('userid', $user->userid)->where('year', $year)->first();
+                    if(!$alreadyWished){
+                        //send email
+                         \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
+                        $data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+                        // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+                         Mail::send('Mail/bdayemail', $data, function ($message) use ($data, $user) {
+                            //send to $user->email
+                            //"salmanmajid14@gmail.com"
+                            //$user->email
+                            $message->to("salmanmajid14@gmail.com",'Birthday')->subject('Happy Birthday');
+                            $message->from($data['user_email']);
+                        });
+                         $bd = new BDayWish;
+                         $bd->userid = $user->userid;
+                         $bd->year = $year;
+                         $bd->save();
+                    }
+                    else{
+                        \Log::info("Bday already wished");
+                    }
+                    
                 }
             }
         }
