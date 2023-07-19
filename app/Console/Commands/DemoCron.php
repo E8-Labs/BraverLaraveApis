@@ -87,7 +87,7 @@ class DemoCron extends Command
                             //"salmanmajid14@gmail.com"
                             //$user->email
                             $message->to($user->email,'Birthday')->subject('Happy Birthday');
-                            $message->from("info@braverhospitality.com");
+                            // $message->from("info@braverhospitality.com");
                         });
                          $bd = new BDayWish;
                          $bd->userid = $user->userid;
