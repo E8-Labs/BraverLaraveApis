@@ -313,7 +313,7 @@ class ChatController extends Controller
 				Mail::send('Mail/ReservationRequestMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
                         $message->to("info@braverhospitality.com",'Reservation')->subject('New Reservation Request');
-                        $message->from($data['user_email']);
+                        $message->from("Braver Hospitality");
                     });
 
 				return true;
@@ -762,7 +762,7 @@ class ChatController extends Controller
 				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
                         $message->to($user->email,'Welcome')->subject('Manage new reservation');
-                        $message->from($data['user_email']);
+                        $message->from("Braver Hospitality");
                     });
 
 				return true;
@@ -776,7 +776,7 @@ class ChatController extends Controller
 				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
                         $message->to($user->email,'Welcome')->subject('Manage new reservation');
-                        $message->from($data['user_email']);
+                        $message->from("Braver Hospitality");
                     });
 	}
 

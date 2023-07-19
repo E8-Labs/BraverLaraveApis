@@ -844,7 +844,7 @@ class UserAuthController extends Controller
 				Mail::send('Mail/Welcome', $data, function ($message) use ($data, $user) {
 					//send to $user->email
                         $message->to($user->email,'Welcome')->subject('Welcome to Braver');
-                        $message->from($data['user_email']);
+                        $message->from("Braver Hospitality");
                     });
 
 				return true;
