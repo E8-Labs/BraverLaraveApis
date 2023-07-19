@@ -39,7 +39,7 @@ class DemoCron extends Command
     public function handle()
     {
         \Log::info("Cron is working fine!");
-        $users = User::get();
+        // $users = User::get();
         // User::whereNotNull('chekrreportid')->where('chekrreportid', '!=', '')
                     // ->whereNotNull('chekrstatus ')
                     // ->whereNotNull('sex_offender_status')
@@ -53,9 +53,9 @@ class DemoCron extends Command
                     //     \Log::info("No Users ");
                     // }
                     
-        foreach($users as $user){
-            $this->checkReport($user);
-        }
+        // foreach($users as $user){
+        //     $this->checkReport($user);
+        // }
 
     $this->CheckForBDays();
         // return 0;
@@ -87,7 +87,7 @@ class DemoCron extends Command
                             //"salmanmajid14@gmail.com"
                             //$user->email
                             $message->to($user->email,'Birthday')->subject('Happy Birthday');
-                            $message->from("Braver Hospitality");
+                            $message->from("info@braverhospitality.com");
                         });
                          $bd = new BDayWish;
                          $bd->userid = $user->userid;
