@@ -80,13 +80,13 @@ class DemoCron extends Command
                     if(!$alreadyWished){
                         //send email
                          \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
-                        $data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+                        $data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
                         // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
                          Mail::send('Mail/bdayemail', $data, function ($message) use ($data, $user) {
                             //send to $user->email
                             //"salmanmajid14@gmail.com"
                             //$user->email
-                            $message->to($user->email,'Birthday')->subject('Happy Birthday');
+                            $message->to("salmanmajid14@gmail.com"/*$user->email*/,'Birthday')->subject('Birthday');
                             // $message->from("info@braverhospitality.com");
                         });
                          $bd = new BDayWish;

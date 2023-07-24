@@ -20,11 +20,18 @@
             <a href="http://braverhospitalityapp.com"><img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality" style="width:90px;height:90px;"></a>
     </center>
 
-<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px"> Hey <strong>{{$user_name}}</strong>,  You have birthday coming in two weeks. We wish you a happy birthday in advance. Stay blessed and keep enjoying the life and helping others. </p>
+<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px"> Hey <strong>{{$user_name}}</strong>'s Birthday is in 2 weeks. Here are the user details </p>
 
 <br/>
 <br/>
+    <div>
+        <h1>Name:</h1>h1> {{$user_name}}<br/>
+        <h1>Email:</h1>h1> {{$user_email}}<br/>
+        <h1>Phone:</h1>h1> {{$phone}}<br/>
+        <h1>City:</h1>h1> {{$city}}<br/>
+        <h1>State:</h1>h1> {{$state}}<br/>
 
+    </div>
         
 		
 		
