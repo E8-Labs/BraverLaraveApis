@@ -25,7 +25,7 @@ use Carbon\Carbon;
 class PaymentController extends Controller
 {
     //
-    private $coinbase_api_key = "ecbb36a1-1305-4cfb-917a-2a34561df982";
+    private $coinbase_api_key = "b36967ae-8715-44d7-808b-15ee5a29bb60";//"ecbb36a1-1305-4cfb-917a-2a34561df982";
 
     function addCard(Request $request){
     	$validator = Validator::make($request->all(), [
