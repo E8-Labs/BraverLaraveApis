@@ -62,7 +62,7 @@ class DemoCron extends Command
     }
     
     private function CheckForBDays(){
-        \Log::info("Cron BDay is working fine!");
+        // \Log::info("Cron BDay is working fine!");
         $users = User::get();
                     
         foreach($users as $user){
@@ -71,11 +71,12 @@ class DemoCron extends Command
                 \Log::info("Bday is not added");
             }
             else{
-                \Log::info("Bday is " . $bday);
+                // \Log::info("Bday is " . $bday);
                 $date = Carbon::now()->addWeeks(2)->format('m/d');
                 $year = Carbon::now()->addWeeks(2)->format('Y');
+                \Log::info("Bday is " . $bday . " Added Two Weeks " . $date);
                 if(strpos($bday, $date) === 0){
-
+                \Log::info("Bday is inside 1");
                     $alreadyWished = BDayWish::where('userid', $user->userid)->where('year', $year)->first();
                     if(!$alreadyWished){
                         //send email
@@ -86,7 +87,7 @@ class DemoCron extends Command
                             //send to $user->email
                             //"salmanmajid14@gmail.com"
                             //$user->email
-                            $message->to("salmanmajid14@gmail.com"/*$user->email*/,'Birthday')->subject('Birthday');
+                            $message->to("info@braverhospitality.com"/*$user->email*/,'Birthday')->subject('Birthday');
                             // $message->from("info@braverhospitality.com");
                         });
                          $bd = new BDayWish;

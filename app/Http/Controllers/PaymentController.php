@@ -11,6 +11,7 @@ use App\Models\Chat\ChatUser;
 use App\Models\Listing\Reservation;
 use App\Models\Listing\ReservationStatus;
 use App\Models\Card;
+use App\Models\Subscription;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Hash;
@@ -453,6 +454,55 @@ class PaymentController extends Controller
 
 			
 
+	}
+
+	function createSubscription(Request $request){
+		$userid = $request->userid;
+		$plan = $request->plan;
+
+		$user = User::where('userid', $userid)->first();
+		if($user){
+			if($user->stripecustomerid !== NULL){
+				// we can create subscription
+				$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+				$sub = $stripe->subscriptions->create([
+  					'customer' => $user->stripecustomerid,
+  					'items' => [
+    					['price' => $plan],
+  					],
+				]);
+				if($sub->id === NULL){
+					// failed to create charge
+					return response()->json(['status' => "0",
+						'message'=> "Some error occurred creating charge",
+						'data' => $sub, 
+					]);
+				}
+				else{
+					// subscription was created
+					$s = new Subscription;
+					$s->userid = $userid;
+					$s->sub_id = $sub->id;
+					$s->sub_status = $sub->status;
+					$s->start_date = $sub->start_date + "";
+					$saved = $s->save();
+					if($saved){
+						return response()->json(['status' => "1",
+							'message'=> "Subscription was created",
+							'data' => $sub, 
+						]);
+					}
+
+				}
+			}
+		}
+		else{
+			// user does not exist
+			return response()->json(['status' => "0",
+						'message'=> "No such user",
+						'data' => NULL, 
+					]);
+		}
 	}
 
 
