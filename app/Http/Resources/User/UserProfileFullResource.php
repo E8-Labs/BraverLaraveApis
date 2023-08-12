@@ -21,6 +21,31 @@ class UserProfileFullResource extends JsonResource
         else{
             $image = \Config::get('constants.profile_images_new') . $image;
         }
+        $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+        $haveActiveSubs = NULL;
+
+        try{
+            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $this->stripecustomerid, "status" => "active"]);
+                // return $haveActiveSubs;
+        }
+        catch(\Exception $e){
+            Log::info("No active subs");
+        }
+        if($haveActiveSubs === NULL){
+            try{
+            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $this->stripecustomerid, "status" => "trialing"]);
+                // return $haveActiveSubs;
+            }
+            catch(\Exception $e){
+                Log::info("No trials subs");
+            }
+        }
+
+
+        $isPremium = FALSE;
+        if($haveActiveSubs){
+            $isPremium = TRUE;
+        }
         return [
             "userid"=> $this->userid,
             "name"=> $this->name,
@@ -39,6 +64,7 @@ class UserProfileFullResource extends JsonResource
             "stripecustomerid"=> $this->stripecustomerid,
             'city' => $this->city,
             'state' => $this->state,
+            "is_premium" => $isPremium,
         ];
     }
 }

@@ -459,41 +459,91 @@ class PaymentController extends Controller
 	function createSubscription(Request $request){
 		$userid = $request->userid;
 		$plan = $request->plan;
+		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->last();
+		
+		$haveSubAlready = NULL;
+		if($oldSub){
+			// return $oldSub->sub_id;
+			try{
+				$haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
+				if($haveSubAlready->status === "active"){
+					
+				}
+				if($haveSubAlready->status === "trialing" ){
+					return response()->json(['status' => "1",
+								'message'=> "Subscription in trial mode",
+								'data' => $sub, 
+					]);
+				}
+				// return $haveSubAlready;
+			}
+			catch(\Exception $e){
+
+			}
+		}
+		
 
 		$user = User::where('userid', $userid)->first();
 		if($user){
 			if($user->stripecustomerid !== NULL){
 				// we can create subscription
-				$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
-				$sub = $stripe->subscriptions->create([
-  					'customer' => $user->stripecustomerid,
-  					'items' => [
-    					['price' => $plan],
-  					],
-				]);
-				if($sub->id === NULL){
-					// failed to create charge
-					return response()->json(['status' => "0",
-						'message'=> "Some error occurred creating charge",
-						'data' => $sub, 
+				
+				if($haveSubAlready && $haveSubAlready->status !== "canceled"){
+
+					$sub = $stripe->subscriptions->resume(
+						$haveSubAlready->id,
+						['billing_cycle_anchor' => 'now']
+					);
+					$oldSub->status = $sub->status;
+					$oldSub->save();
+					return response()->json(['status' => "1",
+								'message'=> "Subscription already existed for same product so renewed",
+								'data' => $sub, 
 					]);
 				}
 				else{
-					// subscription was created
-					$s = new Subscription;
-					$s->userid = $userid;
-					$s->sub_id = $sub->id;
-					$s->sub_status = $sub->status;
-					$s->start_date = $sub->start_date + "";
-					$saved = $s->save();
-					if($saved){
-						return response()->json(['status' => "1",
-							'message'=> "Subscription was created",
+					$sub = $stripe->subscriptions->create([
+  					'customer' => $user->stripecustomerid,
+  					"trial_from_plan" => true,
+  					// "trial_period_days" => 90,
+  					'items' => [
+    					['price' => $plan],
+  					],
+					]);
+					if($sub->id === NULL){
+					// failed to create charge
+						return response()->json(['status' => "0",
+							'message'=> "Some error occurred creating charge",
 							'data' => $sub, 
 						]);
 					}
+					else{
+					// subscription was created
+						$s = new Subscription;
+						$s->userid = $userid;
+						$s->plan = $plan;
+						$s->sub_id = $sub->id;
+						$s->sub_status = $sub->status;
+						$s->start_date = $sub->start_date . "";
+						$saved = $s->save();
+						if($saved){
+							return response()->json(['status' => "1",
+								'message'=> "Subscription was created",
+								'data' => $sub, 
+							]);
+						}
 
+					}
 				}
+				
+			}
+			else{
+				// add a card
+				return response()->json(['status' => "0",
+						'message'=> "No payment method found",
+						'data' => NULL, 
+					]);
 			}
 		}
 		else{
