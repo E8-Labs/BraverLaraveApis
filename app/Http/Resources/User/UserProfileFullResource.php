@@ -29,7 +29,7 @@ class UserProfileFullResource extends JsonResource
                 // return $haveActiveSubs;
         }
         catch(\Exception $e){
-            Log::info("No active subs");
+            \Log::info("No active subs");
         }
         if($haveActiveSubs === NULL){
             try{
@@ -37,7 +37,7 @@ class UserProfileFullResource extends JsonResource
                 // return $haveActiveSubs;
             }
             catch(\Exception $e){
-                Log::info("No trials subs");
+                \Log::info("No trials subs");
             }
         }
 

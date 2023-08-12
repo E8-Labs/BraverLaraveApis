@@ -460,7 +460,7 @@ class PaymentController extends Controller
 		$userid = $request->userid;
 		$plan = $request->plan;
 		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
-		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->last();
+		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->orderBy('id', 'DESC')->first();
 		
 		$haveSubAlready = NULL;
 		if($oldSub){
@@ -468,7 +468,10 @@ class PaymentController extends Controller
 			try{
 				$haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
 				if($haveSubAlready->status === "active"){
-					
+					return response()->json(['status' => "1",
+								'message'=> "Subscription already exists",
+								'data' => $sub, 
+					]);
 				}
 				if($haveSubAlready->status === "trialing" ){
 					return response()->json(['status' => "1",
@@ -489,7 +492,7 @@ class PaymentController extends Controller
 			if($user->stripecustomerid !== NULL){
 				// we can create subscription
 				
-				if($haveSubAlready && $haveSubAlready->status !== "canceled"){
+				if($haveSubAlready && $haveSubAlready->status !== "paused"){
 
 					$sub = $stripe->subscriptions->resume(
 						$haveSubAlready->id,
@@ -498,7 +501,7 @@ class PaymentController extends Controller
 					$oldSub->status = $sub->status;
 					$oldSub->save();
 					return response()->json(['status' => "1",
-								'message'=> "Subscription already existed for same product so renewed",
+								'message'=> "Subscription already existed & paused for same product so renewed",
 								'data' => $sub, 
 					]);
 				}
