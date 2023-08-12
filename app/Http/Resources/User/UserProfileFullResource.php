@@ -50,8 +50,11 @@ class UserProfileFullResource extends JsonResource
             if($isTrial){
                 $mySubscription = ["status" => "trialing", "plan" => $type];
             }
-            else{
+            else if ($sub->status === "active"){
                 $mySubscription = ["status" => "active", "plan" => $type];
+            }
+            else{
+                $mySubscription = ["status" => "inactive", "plan" => $type];
             }
         }
 
