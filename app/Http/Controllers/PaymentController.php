@@ -505,7 +505,8 @@ class PaymentController extends Controller
 			return $this->createSubscription($request);
 		}
 		else{
-			$isTrial = $this->checkIfTrial($plans);
+			$sub = $plans[0];
+			$isTrial = $this->checkIfTrial($sub);
 			if($isTrial){
 				return response()->json(['status' => "1",
 								'message'=> "Please wait for the trial to expire",
@@ -515,7 +516,7 @@ class PaymentController extends Controller
 			// return "One active subscription";
 
 			//active subscription. We assume and will enforce only one active or trialing subscription for a user
-			$sub = $plans[0];
+			
 
 			$id = $sub->id;
 			//check if the user already has yearly subscription, then 
@@ -549,12 +550,12 @@ class PaymentController extends Controller
 
 	}
 
-	 function checkIfTrial($plans){
-	 	foreach($plans as $plan){
+	 function checkIfTrial($plan){
+	 	// foreach($plans as $plan){
 	 		if($plan->status === "trialing"){
 	 			return TRUE;
 	 		}
-	 	}
+	 	// }
 	 	return FALSE;
 	 }
 

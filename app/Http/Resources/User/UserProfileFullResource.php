@@ -35,8 +35,9 @@ class UserProfileFullResource extends JsonResource
             // return $this->createSubscription($request);
         }
         else{
-            $isTrial = $paymentController->checkIfTrial($plans);
             $sub = $plans[0];
+            $isTrial = $paymentController->checkIfTrial($sub);
+            
             $price = $sub->plan->id;
             $type = "None";
 
