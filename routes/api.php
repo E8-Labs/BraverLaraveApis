@@ -63,6 +63,7 @@ Route::post("approveuser",[UserController::class,'approveUser']);
 Route::post("addcard",[PaymentController::class,'addCard']);
 Route::post("cardlist",[PaymentController::class,'cardList']);
 Route::post("create_subscription", [PaymentController::class, "createSubscription"]);
+Route::post("upgrade_subscription", [PaymentController::class, "upgradeSubscription"]);
 
 Route::post("addyacht",[ListingController::class,'addListing']);
 Route::post("deleteyacht",[ListingController::class,'deleteListing']);

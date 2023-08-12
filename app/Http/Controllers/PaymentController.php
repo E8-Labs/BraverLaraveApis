@@ -456,11 +456,114 @@ class PaymentController extends Controller
 
 	}
 
+	function getUserActiveSubscriptions($stripecustomerid){
+		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+        // $haveActiveSubs = NULL;
+
+        $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+        // $paymentController = new PaymentController;
+        $haveActiveSubs = NULL;//$paymentController->getUserActiveSubscriptions($this->stripecustomerid);
+
+        try{
+            \Log::info("Checking active");
+            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $stripecustomerid, "status" => "active"]);
+                // return $haveActiveSubs;
+        }
+        catch(\Exception $e){
+            \Log::info("No active subs");
+        }
+        if($haveActiveSubs === NULL || count($haveActiveSubs->data) === 0){
+            try{
+                \Log::info("Checking trial");
+            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $stripecustomerid, "status" => "trialing"]);
+                // return $haveActiveSubs;
+            }
+            catch(\Exception $e){
+                \Log::info("No trials subs " . $e->getMessage());
+            }
+        }
+
+        if($haveActiveSubs){
+        	// $data = $haveActiveSubs->data;
+        	return $haveActiveSubs->data;
+        }
+        else{
+        	return NULL;
+        }
+	}
+
+
+
+
+	function upgradeSubscription(Request $request){
+		$userid = $request->userid;
+		$plan = $request->plan; // subscribe to new plan
+		$user = User::where('userid', $userid)->first();
+		$plans = $this->getUserActiveSubscriptions($user->stripecustomerid);
+		if($plans === NULL || count($plans) === 0){
+			//if no previous subscription, then just subscribe
+			return $this->createSubscription($request);
+		}
+		else{
+			$isTrial = $this->checkIfTrial($plans);
+			if($isTrial){
+				return response()->json(['status' => "1",
+								'message'=> "Please wait for the trial to expire",
+								'data' => NULL, 
+				]);
+			}
+			// return "One active subscription";
+
+			//active subscription. We assume and will enforce only one active or trialing subscription for a user
+			$sub = $plans[0];
+
+			$id = $sub->id;
+			//check if the user already has yearly subscription, then 
+
+			$subItem = $sub->items->data[0];
+			$subItemId = $subItem->id;
+			$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+			$updated = $stripe->subscriptions->update(
+				$id,
+				["items" =>[["id" => $subItemId, "price" => $plan]]]
+			);
+
+			if($updated){
+				//if susccessfull then update the database as well
+				return response()->json(['status' => "1",
+								'message'=> "Plan upgraded",
+								'data' => $updated, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+								'message'=> "Error upgrading the plan",
+								'data' => $updated, 
+				]);
+			}
+
+
+		}
+		
+
+
+	}
+
+	 function checkIfTrial($plans){
+	 	foreach($plans as $plan){
+	 		if($plan->status === "trialing"){
+	 			return TRUE;
+	 		}
+	 	}
+	 	return FALSE;
+	 }
+
 	function createSubscription(Request $request){
 		$userid = $request->userid;
 		$plan = $request->plan;
 		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
 		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->orderBy('id', 'DESC')->first();
+
 		
 		$haveSubAlready = NULL;
 		if($oldSub){
@@ -492,8 +595,8 @@ class PaymentController extends Controller
 			if($user->stripecustomerid !== NULL){
 				// we can create subscription
 				
-				if($haveSubAlready && $haveSubAlready->status !== "paused"){
-
+				if($haveSubAlready && $haveSubAlready->status === "paused"){
+					\Log::info($haveSubAlready);
 					$sub = $stripe->subscriptions->resume(
 						$haveSubAlready->id,
 						['billing_cycle_anchor' => 'now']
@@ -508,7 +611,7 @@ class PaymentController extends Controller
 				else{
 					$sub = $stripe->subscriptions->create([
   					'customer' => $user->stripecustomerid,
-  					"trial_from_plan" => true,
+  					"trial_from_plan" => false, // change it to true to avail trial
   					// "trial_period_days" => 90,
   					'items' => [
     					['price' => $plan],

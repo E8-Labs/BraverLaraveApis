@@ -3,6 +3,7 @@
 namespace App\Http\Resources\User;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Controllers\PaymentController;
 
 class UserProfileFullResource extends JsonResource
 {
@@ -22,22 +23,34 @@ class UserProfileFullResource extends JsonResource
             $image = \Config::get('constants.profile_images_new') . $image;
         }
         $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
-        $haveActiveSubs = NULL;
+        $paymentController = new PaymentController;
+        $haveActiveSubs = $paymentController->getUserActiveSubscriptions($this->stripecustomerid);
 
-        try{
-            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $this->stripecustomerid, "status" => "active"]);
-                // return $haveActiveSubs;
+        $plans = $haveActiveSubs;
+
+
+        $mySubscription = ["status" => "inactive", "plan" => "None"]; // Monthly & Yearly
+        if($plans === NULL || count($plans) === 0){
+            //if no previous subscription, then just subscribe
+            // return $this->createSubscription($request);
         }
-        catch(\Exception $e){
-            \Log::info("No active subs");
-        }
-        if($haveActiveSubs === NULL){
-            try{
-            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $this->stripecustomerid, "status" => "trialing"]);
-                // return $haveActiveSubs;
+        else{
+            $isTrial = $paymentController->checkIfTrial($plans);
+            $sub = $plans[0];
+            $price = $sub->plan->id;
+            $type = "None";
+
+            if($price === env("Test_Yearly_Plan_Id")){
+                $type = "Yearly";
             }
-            catch(\Exception $e){
-                \Log::info("No trials subs");
+            else if($price === env("Test_Monthly_Plan_Id")){
+                $type = "Monthly";
+            }
+            if($isTrial){
+                $mySubscription = ["status" => "trialing", "plan" => $type];
+            }
+            else{
+                $mySubscription = ["status" => "active", "plan" => $type];
             }
         }
 
@@ -65,6 +78,7 @@ class UserProfileFullResource extends JsonResource
             'city' => $this->city,
             'state' => $this->state,
             "is_premium" => $isPremium,
+            "plan" => $mySubscription
         ];
     }
 }
