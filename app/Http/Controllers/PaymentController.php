@@ -612,7 +612,7 @@ class PaymentController extends Controller
 				else{
 					$sub = $stripe->subscriptions->create([
   					'customer' => $user->stripecustomerid,
-  					"trial_from_plan" => false, // change it to true to avail trial
+  					"trial_from_plan" => true, // change it to true to avail trial
   					// "trial_period_days" => 90,
   					'items' => [
     					['price' => $plan],
