@@ -575,7 +575,7 @@ class UserAuthController extends Controller
 				]);
 			}
 			
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
 			$user->invitedbycode = $request->invitecode;
 			$done = $user->save();
 			if($done){
@@ -618,7 +618,7 @@ class UserAuthController extends Controller
 
 			$params = array();
        
-       $user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+       $user = User::where('userid', $request->userid)->first();
             
        $checker_data = array();
 

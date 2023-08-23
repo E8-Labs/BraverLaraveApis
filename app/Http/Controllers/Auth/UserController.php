@@ -111,14 +111,14 @@ class UserController extends Controller
 					'data' => null, 
 				]);
 			}
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
             if($user->role == 'ADMIN'){
 				return response()->json(['status' => "0",
 					'message'=> 'can not delete admin user ' . $request->userid,
 					'data' => $user, 
 				]);
 			}
-			$deleted = User::where('userid', $request->userid)->orWhere('id', $request->userid)->delete();
+			$deleted = User::where('userid', $request->userid)->delete();
 			
 			if($deleted){
 				return response()->json(['status' => "1",
