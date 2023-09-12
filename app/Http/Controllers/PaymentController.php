@@ -562,6 +562,10 @@ class PaymentController extends Controller
 	function createSubscription(Request $request){
 		$userid = $request->userid;
 		$plan = $request->plan;
+		$card = null;
+		if($request->has("payment_method")){
+		    $card = $request->payment_method;
+		}
 		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
 		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->orderBy('id', 'DESC')->first();
 
@@ -610,14 +614,25 @@ class PaymentController extends Controller
 					]);
 				}
 				else{
-					$sub = $stripe->subscriptions->create([
+				    $params = [
   					'customer' => $user->stripecustomerid,
   					"trial_from_plan" => true, // change it to true to avail trial
   					// "trial_period_days" => 90,
   					'items' => [
     					['price' => $plan],
   					],
-					]);
+					];
+				    if($card !== null){
+				        $params = ['default_payment_method' => $card, 
+				            'customer' => $user->stripecustomerid,
+  					        "trial_from_plan" => true, // change it to true to avail trial
+  					        // "trial_period_days" => 90,
+  					        'items' => [
+    					         ['price' => $plan],
+  					        ],
+  					     ];
+				    }
+					$sub = $stripe->subscriptions->create($params);
 					if($sub->id === NULL){
 					// failed to create charge
 						return response()->json(['status' => "0",
