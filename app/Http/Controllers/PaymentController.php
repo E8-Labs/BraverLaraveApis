@@ -842,7 +842,24 @@ class PaymentController extends Controller
 		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
 		$payload = json_decode($request->getContent(), true);
 		\Log::info("Webhook stripe called");
-		\Log::info($payload);
+		
+		$event_id = $payload["id"];
+		$event_type = $payload["type"]; // customer.subscription.updated etc
+		$subData = $payload["data"]["object"];
+		
+		$subid = $subData["id"];
+		$status = $subData["status"];
+		$cancel_at_period_end = $subData["cancel_at_period_end"];
+		
+		$dbSub = Subscription::where("sub_id", $subid)->first();
+		if($dbSub){
+		    $dbSub->sub_status = $status;
+		    $dbSub->cancel_at_period_end = $cancel_at_period_end;
+		    $dbSub->save();
+		}
+		
+// 		\Log::info("Status is " . $status);
+// 		\Log::info($subData);
 		return response()->json(['status' => "1",
 					'message'=> 'Handled',
 					'data' => null, 
