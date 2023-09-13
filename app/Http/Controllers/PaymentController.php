@@ -682,7 +682,7 @@ class PaymentController extends Controller
 		
 
 		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
-		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->orderBy('id', 'DESC')->first();
+		$oldSub = Subscription::where('userid', $userid)->orderBy('id', 'DESC')->first();
 
 		
 		$haveSubAlready = NULL;
@@ -690,13 +690,13 @@ class PaymentController extends Controller
 			// return $oldSub->sub_id;
 			try{
 				$haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
-				if($haveSubAlready->status === "active" || $haveSubAlready->status === "trialing"{
+				if($haveSubAlready->status === "active" || $haveSubAlready->status === "trialing"){
 					// cancel here
 					// $stripe = new \Stripe\StripeClient('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
-					$cancelled = $stripe->subscriptions->cancel(
-  						$haveSubAlready->id,
-  							[]
-					);
+					$cancelled = $stripe->subscriptions->cancel($haveSubAlready->id, []);
+					if($cancelled){
+					    $oldSub->delete();
+					}
 					return response()->json(['status' => "1",
 						'message'=> "Subscription cancelled",
 						'data' => $cancelled, 
