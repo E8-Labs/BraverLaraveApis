@@ -677,6 +677,47 @@ class PaymentController extends Controller
 		}
 	}
 
+	function cancelSubscription(Request $request){
+		$userid = $request->userid;
+		
+
+		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->orderBy('id', 'DESC')->first();
+
+		
+		$haveSubAlready = NULL;
+		if($oldSub){
+			// return $oldSub->sub_id;
+			try{
+				$haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
+				if($haveSubAlready->status === "active" || $haveSubAlready->status === "trialing"{
+					// cancel here
+					// $stripe = new \Stripe\StripeClient('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
+					$cancelled = $stripe->subscriptions->cancel(
+  						$haveSubAlready->id,
+  							[]
+					);
+					return response()->json(['status' => "1",
+						'message'=> "Subscription cancelled",
+						'data' => $cancelled, 
+					]);
+				}
+			}
+			catch(\Exception $e){
+				return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
+					'data' => null, 
+				]);
+			}
+		}
+		else{
+			return response()->json(['status' => "0",
+					'message'=> "User is not subscribed",
+					'data' => null, 
+				]);
+		}
+	}
+
 
 	private function chargeUser($amount, $customerstripeid, $description, $source){
 		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
