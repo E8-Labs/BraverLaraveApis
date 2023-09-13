@@ -838,6 +838,18 @@ class PaymentController extends Controller
 	}
 
 
+	function stripeWebhook(Request $request){
+		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+		$payload = json_decode($request->getContent(), true);
+		\Log::info("Webhook stripe called");
+		\Log::info($payload);
+		return response()->json(['status' => "1",
+					'message'=> 'Handled',
+					'data' => null, 
+				]);
+	}
+
+
 	public function cancelReservation(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',

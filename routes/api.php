@@ -66,6 +66,8 @@ Route::post("create_subscription", [PaymentController::class, "createSubscriptio
 Route::post("upgrade_subscription", [PaymentController::class, "upgradeSubscription"]);
 Route::post("cancel_subscription", [PaymentController::class, "cancelSubscription"]);
 
+Route::post("send_st_webhook", [PaymentController::class, "stripeWebhook"]);
+
 Route::post("addyacht",[ListingController::class,'addListing']);
 Route::post("deleteyacht",[ListingController::class,'deleteListing']);
 Route::post("edityacht",[EditListingController::class,'editListing']);
