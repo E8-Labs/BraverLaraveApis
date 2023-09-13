@@ -852,14 +852,24 @@ class PaymentController extends Controller
 		$cancel_at_period_end = $subData["cancel_at_period_end"];
 		
 		$dbSub = Subscription::where("sub_id", $subid)->first();
+// 		\Log::info("Status is " . $status);
+		
+		$items = $subData["items"]["data"];
+		$firstPlan = $items[0]["plan"];
+// 		\Log::info($firstPlan);
+		$interval = $firstPlan["interval"];
+		$plan_id = $firstPlan["id"];
+		$amount = $firstPlan["amount"];
 		if($dbSub){
 		    $dbSub->sub_status = $status;
 		    $dbSub->cancel_at_period_end = $cancel_at_period_end;
+		    $dbSub->sub_interval = $interval;
+		    $dbSub->plan = $plan_id;
+		    $dbSub->price = $amount;
 		    $dbSub->save();
 		}
 		
-// 		\Log::info("Status is " . $status);
-// 		\Log::info($subData);
+		
 		return response()->json(['status' => "1",
 					'message'=> 'Handled',
 					'data' => null, 
