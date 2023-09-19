@@ -53,7 +53,8 @@ Route::post("register_social", [SocialLoginController::class, 'RegisterUserWithS
 
 
 
-
+Route::post("generate_hash", [UserAuthController::class, "generateWebAccessCode"]);
+Route::post("check_web_access_code", [UserAuthController::class, "checkWebAccessCode"]);
 Route::post("deleteuser",[UserController::class,'deleteUser']);
 Route::post("updateuser",[UserAuthController::class,'updateUser']);
 Route::post("redeem_code",[UserAuthController::class,'redeemOfferCode']);

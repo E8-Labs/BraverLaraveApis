@@ -614,8 +614,13 @@ class PaymentController extends Controller
 					]);
 				}
 				else{
+				    $code = null;
+				    if($request->has("promo_code")){
+				        $code = $request->promo_code;
+				    }
 				    $params = [
   					'customer' => $user->stripecustomerid,
+  		// 			"promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
   					"trial_from_plan" => true, // change it to true to avail trial
   					// "trial_period_days" => 90,
   					'items' => [
@@ -625,12 +630,16 @@ class PaymentController extends Controller
 				    if($card !== null){
 				        $params = ['default_payment_method' => $card, 
 				            'customer' => $user->stripecustomerid,
+				            // "promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
   					        "trial_from_plan" => true, // change it to true to avail trial
   					        // "trial_period_days" => 90,
   					        'items' => [
     					         ['price' => $plan],
   					        ],
   					     ];
+				    }
+				    if($code !== null){
+				        $params["promotion_code"] = $code;
 				    }
 					$sub = $stripe->subscriptions->create($params);
 					if($sub->id === NULL){
@@ -856,7 +865,7 @@ class PaymentController extends Controller
 		
 		$items = $subData["items"]["data"];
 		$firstPlan = $items[0]["plan"];
-// 		\Log::info($firstPlan);
+		\Log::info($subData);
 		$interval = $firstPlan["interval"];
 		$plan_id = $firstPlan["id"];
 		$amount = $firstPlan["amount"];

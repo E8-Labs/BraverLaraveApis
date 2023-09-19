@@ -12,6 +12,7 @@ use App\Models\NotificationTypes;
 use App\Models\User\Notification;
 use App\Models\User\OfferCodeSubscription;
 use App\Models\User\UserOfferCodeSubscription;
+use App\Models\BraverWebAccessCodes;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -848,6 +849,105 @@ class UserAuthController extends Controller
                     });
 
 				return true;
+		}
+
+
+		//subscription authentication related logic
+		function generateWebAccessCode(Request $request){
+			$apikey = null;
+			if($request->has('apikey')){
+				$apikey = $request->apikey;
+				if($apikey != $this->APIKEY){ // get value from constants
+					return response()->json(['status' => "0",
+						'message'=> 'invalid api key',
+						'data' => null, 
+					]);
+				}
+				$userid = $request->userid;
+
+				$hash = sha1(time());
+				BraverWebAccessCodes::where("userid", $userid)->delete();
+				$code = new BraverWebAccessCodes;
+				$code->userid = $userid;
+				$code->code = $hash;
+				$saved = $code->save();
+				if($saved){
+					return response()->json(['status' => "1",
+						'message'=> 'Hashed code',
+						'data' => $code, 
+					]);
+				}
+			}
+			else{
+				return response()->json([
+					"status"=> "0",
+					"message"=> "Invalid api key",
+					"data" => null
+				]);
+			}
+			//BraverWebAccessCodes
+
+		}
+
+
+		function checkWebAccessCode(Request $request){
+			$apikey = null;
+			if($request->has('apikey')){
+				$apikey = $request->apikey;
+				if($apikey != $this->APIKEY){ // get value from constants
+					return response()->json(['status' => "0",
+						'message'=> 'invalid api key',
+						'data' => null, 
+					]);
+				}
+				$reqcode = $request->code;
+
+				$code = BraverWebAccessCodes::where("code", $reqcode)->first();
+				if(!$code){
+					return response()->json(['status' => "0",
+						'message'=> 'invalid code',
+						'data' => null, 
+					]);
+				}
+
+				$nowTime = Carbon::now();
+				$codeGenerationTime = Carbon::parse($code->created_at);
+
+				$totalDuration = $nowTime->diffInSeconds($codeGenerationTime);
+				if($totalDuration > 60){
+					// if greater than 60 seconds then the code is expired
+					$code->delete();
+					return response()->json(['status' => "0",
+						'message'=> 'Code has expired',
+						'data' => null, 
+					]);
+				} 
+				else{
+					$user = User::where("userid", $code->userid)->first();
+					if($user){
+						return response()->json(['status' => "1",
+							'message'=> 'User details',
+							'data' => new UserProfileFullResource($user), 
+						]);
+					}
+					else{
+						return response()->json(['status' => "0",
+							'message'=> 'No such user',
+							'data' => null, 
+						]);
+					}
+				}
+				
+
+				
+			}
+			else{
+				return response()->json([
+					"status"=> "0",
+					"message"=> "Invalid api key",
+					"data" => null
+				]);
+			}
 		}
 		
 }
