@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('userid',50);
             $table->string('year',50);
+            $table->string('notice_type',50); //2week & bday
             $table->timestamps();
         });
     }

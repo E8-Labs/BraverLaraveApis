@@ -25,7 +25,7 @@
             <a href="http://braverhospitalityapp.com"><img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality" style="width:90px;height:90px;"></a>
     </center>
 
-<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px"> Hey <strong>{{$user_name}}</strong>'s Birthday is in 2 weeks. Here are the user details </p>
+<p style="padding-left: 23px; font-family: 'Lato', sans-serif; font-size:15px"> Hey <strong>{{$user_name}}</strong>'s Birthday is {{$time}}. Here are the user details </p>
  
     <div class="container">
     <div class="row">
