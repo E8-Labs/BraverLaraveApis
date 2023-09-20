@@ -39,6 +39,7 @@ class ListingResource extends JsonResource
         return [
             "yachtid"=> $this->yachtid,
             "yachtname"=> $this->yachtname,
+            "rooms" => $this->rooms,
             "yachtdescription"=> $this->yachtdescription,
             "yachtprice"=> $this->yachtprice,
             "weekly_price"=> $this->weekly_price,

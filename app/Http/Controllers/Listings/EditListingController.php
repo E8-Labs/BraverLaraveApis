@@ -88,6 +88,11 @@ class EditListingController extends Controller
 			$listing->yachtdescription = $description;
 			// $listing->yachtdescription = $request->yachtdescription;
 		}
+
+		if($request->has('rooms')){
+			$listing->rooms = $request->rooms;
+		}
+		
 		
 		if($request->has('phone')){
 			$listing->yachtphone = $request->phone;

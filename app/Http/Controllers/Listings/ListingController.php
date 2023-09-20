@@ -77,7 +77,12 @@ class ListingController extends Controller
 		$description = str_replace(ListingController::PercentageEncode, "%", $description);
 		$listing->yachtdescription = $description;
 		
-		
+		if($request->has('rooms')){
+			$listing->rooms = $request->rooms;
+		}
+		else{
+			$listing->rooms = '';
+		}
 		
 		$listing->type = $request->type;
 
