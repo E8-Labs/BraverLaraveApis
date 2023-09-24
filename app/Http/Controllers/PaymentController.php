@@ -340,7 +340,7 @@ class PaymentController extends Controller
 	private function CreateInvoiceOnServer($request, $charge){
 		$invoice = Invoice::where('reservation_id', $request->reservation_id)->first();
 			 $message = "";
-			 $charge = array();
+			 
 			if($invoice){
         		
 			}
