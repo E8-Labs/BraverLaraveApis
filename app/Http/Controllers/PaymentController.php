@@ -337,6 +337,55 @@ class PaymentController extends Controller
 
 	}
 
+	private function CreateInvoiceOnServer($request, $charge){
+		$invoice = Invoice::where('reservation_id', $request->reservation_id)->first();
+			 $message = "";
+			 $charge = array();
+			if($invoice){
+        		
+			}
+			else{
+				$invoice = new Invoice();
+				$invoice->invoice_id = $request->invoice_id;
+			}
+			$tip = 0;
+			$serviceFee = 0;
+			$tax = 0;
+			if($request->has('tip')){
+				$tip = (double)$request->tip;
+			}
+
+			if($request->has('tax')){
+				$tax = (double)$request->tax;
+			}
+			if($request->has('service_fee')){
+				$serviceFee = (double)$request->service_fee;
+			}
+
+			$amount = $request->amount + $tax + $serviceFee + $tip;
+
+			
+    		// echo "this is charge";
+    		$invoice->stripe_charge_id = $charge["stripe_charge_id"];
+			$invoice->crypto_charge_id = $charge["crypto_charge_id"];
+    		// $price = $charge["price"];
+    		$payment_status = $charge["payments_status"];
+    		$timeline_status = $charge["timeline_status"];
+
+    		// $invoice->crypto_charge_code = $code;
+    		$invoice->invoice_by = $request->userid;
+    		$invoice->reservation_id = $request->reservation_id;
+    		// $invoice->crypto_charge_id = $charge_id;
+    		// $invoice->crypto_charge_url = $url;
+    		$invoice->payment_status = $payment_status;
+    		$invoice->timeline_status = $timeline_status;
+			$invoice->service_fee = $serviceFee;
+			$invoice->tip = $tip;
+			$invoice->tax = $tax;
+    		$saved = $invoice->save();
+			return $saved;
+	}
+
 
 	function makeReservation(Request $request){
 		$validator = Validator::make($request->all(), [
@@ -347,8 +396,10 @@ class PaymentController extends Controller
 			"yachtid" => 'required',
 			"amount" => 'required',
 			"chatid" => 'required',
+			"invoice_id" => 'required',
 
 				]);
+
 
 			if($validator->fails()){
 				return response()->json(['status' => "0",
@@ -377,6 +428,7 @@ class PaymentController extends Controller
 			DB::beginTransaction();
 			// $res->reservationid = uniqid();
 			$res->chatid = $request->chatid;
+			
 			$res->reservedfor = $request->userid;
 			$res->dateadded = Carbon::now()->toDateTimeString();
 			$yachtid = $request->yachtid;
@@ -418,6 +470,7 @@ class PaymentController extends Controller
 				$source = $request->paymentmethod;
 			}
 			$cost = $res->amountpaid * 100;
+
 			// return $cost;
 			$charge = $this->chargeUser($cost, $user->stripecustomerid, $res->reservationdescription, $source);
 			if($charge->id == NULL){
@@ -432,6 +485,15 @@ class PaymentController extends Controller
 				$res->reservationstatus = ReservationStatus::StatusReserved;
 				$res->transactionid = $trid;
 				$res->save();
+				try{
+					$invoiceCreated = $this->CreateInvoiceOnServer($request, ["stripe_charge_id" => $trid, "crypto_charge_id"=> null, "payment_status"=> "Confirmed", "timeline_status" => "Completed"]);
+				}
+				catch(\Exception $e){
+					\Log::info("-----------StripeLog---------------");
+					\Log::info("Stripe payment error " . $e->getMessage());
+					\Log::info($e);
+					\Log::info("-----------StripeLog---------------");
+				}
 				DB::commit();
 				$chat = ChatThread::where('chatid', $request->chatid)->first();
 				$this->sendNotToAllUsers($user, $chat);
@@ -763,6 +825,7 @@ class PaymentController extends Controller
 			"userid" => 'required',
 			"amount" => 'required',
 
+
 				]);
 
 			if($validator->fails()){
@@ -788,8 +851,19 @@ class PaymentController extends Controller
 			if($request->has('name')){
 				$name = $request->name;
 			}
+			$tip = 0;
+			$serviceFee = 0;
+			$tax = 0;
+			if($request->has('tip')){
+				$tip = (double)$request->tip;
+			}
 
-
+			if($request->has('tax')){
+				$tax = (double)$request->tax;
+			}
+			if($request->has('service_fee')){
+				$serviceFee = (double)$request->service_fee;
+			}
 
 			$invoice = Invoice::where('invoice_id', $request->invoice_id)->first();
 			 $message = "";
@@ -810,8 +884,10 @@ class PaymentController extends Controller
 				$invoice->invoice_id = $request->invoice_id;
 			}
 
+			$amount = $request->amount + $tax + $serviceFee + $tip;
+
 			if($charge == null){
-        		$charge = $this->createCryptoCharge($request->amount, $description, $name);
+        		$charge = $this->createCryptoCharge($amount, $description, $name);
     		}
     		else{
     		    $message = "Charge already exists and not expired and not cancelled";
@@ -831,6 +907,9 @@ class PaymentController extends Controller
     		$invoice->crypto_charge_url = $url;
     		$invoice->payment_status = $payment_status;
     		$invoice->timeline_status = $timeline_status;
+			$invoice->service_fee = $serviceFee;
+			$invoice->tip = $tip;
+			$invoice->tax = $tax;
     		$saved = $invoice->save();
     		if($saved){
     			return response()->json(['status' => "1",
@@ -845,6 +924,36 @@ class PaymentController extends Controller
 				]);
     		}
 	}
+
+	// function createNewInvoice(Request $request){
+	// 	$key = $request->apikey;
+	// 		if($key != $this->APIKEY){ // get value from constants
+	// 			return response()->json(['status' => "0",
+	// 				'message'=> 'invalid api key',
+	// 				'data' => null, 
+	// 			]);
+	// 		}
+	// 		$description = '';
+	// 		if($request->has('description')){
+	// 			$description = $request->description;
+	// 		}
+	// 		$name = 'Charge';
+	// 		if($request->has('name')){
+	// 			$name = $request->name;
+	// 		}
+	// 	$invoice = new Invoice();
+	// 	$invoice->invoice_id = $request->invoice_id;
+
+	// 	$charge = $this->createCryptoCharge($request->amount + $request->tax + $request->service_fee, $description, $name);
+	// 	$invoice->crypto_charge_code = $code;
+    // 		$invoice->invoice_by = $request->userid;
+    // 		$invoice->reservation_id = $request->reservation_id;
+    // 		$invoice->crypto_charge_id = $charge_id;
+    // 		$invoice->crypto_charge_url = $url;
+    // 		$invoice->payment_status = $payment_status;
+    // 		$invoice->timeline_status = $timeline_status;
+    // 		$saved = $invoice->save();
+	// }
 
 
 	function stripeWebhook(Request $request){
