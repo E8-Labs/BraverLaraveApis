@@ -364,7 +364,7 @@ class PaymentController extends Controller
 
 			$amount = $request->amount + $tax + $serviceFee + $tip;
 
-			
+			$invoice->amount = $request->amount;
     		// echo "this is charge";
     		$invoice->stripe_charge_id = $charge["stripe_charge_id"];
 			$invoice->crypto_charge_id = $charge["crypto_charge_id"];
