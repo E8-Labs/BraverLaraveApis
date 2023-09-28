@@ -520,7 +520,7 @@ class ChatController extends Controller
 				$data=$request->file('pdf')->store('ChatFiles');
 				return response()->json(['status' => "1",
 					'message'=> 'File uploaded',
-					'data' => $data, 
+					'data' => "http://braverhospitalityapp.com/braver/storage/app/" . $data, 
 				]);
 			}
 			else{
