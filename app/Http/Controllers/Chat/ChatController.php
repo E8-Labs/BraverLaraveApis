@@ -492,6 +492,45 @@ class ChatController extends Controller
 
 	}
 
+	function uploadChatPdf(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+// 			"userid" => 'required',
+			"pdf" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+
+			if($request->hasFile("pdf")){
+				$data=$request->file('pdf')->store('ChatFiles');
+				return response()->json(['status' => "1",
+					'message'=> 'File uploaded',
+					'data' => $data, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'No file provided',
+					'data' => null, 
+				]);
+			}
+	}
+
 	function uploadChatImage(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',

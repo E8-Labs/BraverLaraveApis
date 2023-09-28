@@ -83,6 +83,7 @@ Route::get("createchekrreport",[UserAuthController::class,'createChekrReport']);
 //Chat
 Route::post("createchat",[ChatController::class,'createChat']);
 Route::post("uploadchatimage",[ChatController::class,'uploadChatImage']);
+Route::post("uploadfile", [ChatController::class, "uploadChatPdf"]);
 Route::post("updatechat",[ChatController::class,'updateChat']);
 Route::get("getchatbyid",[ChatController::class,'getChatById']);
 Route::get("chatlistteam",[ChatController::class,'getTeamChat']);
