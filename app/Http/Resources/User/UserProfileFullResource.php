@@ -29,7 +29,7 @@ class UserProfileFullResource extends JsonResource
         $plans = $haveActiveSubs;
 
 
-        $mySubscription = ["status" => "inactive", "plan" => "None"]; // Monthly & Yearly
+        $mySubscription = ["status" => "inactive", "plan" => ""]; // Monthly & Yearly
         if($plans === NULL || count($plans) === 0){
             //if no previous subscription, then just subscribe
             // return $this->createSubscription($request);
@@ -39,12 +39,19 @@ class UserProfileFullResource extends JsonResource
             $isTrial = $paymentController->checkIfTrial($sub);
             
             $price = $sub->plan->id;
-            $type = "None";
+            $type = "";
 
-            if($price === env("Test_Yearly_Plan_Id")){
+            // if($price === env("Test_Yearly_Plan_Id")){
+            //     $type = "Yearly";
+            // }
+            // else if($price === env("Test_Monthly_Plan_Id")){
+            //     $type = "Monthly";
+            // }
+
+            if($price === env("Live_Yearly_Plan_Id")){
                 $type = "Yearly";
             }
-            else if($price === env("Test_Monthly_Plan_Id")){
+            else if($price === env("Live_Monthly_Plan_Id")){
                 $type = "Monthly";
             }
             if($isTrial){

@@ -748,6 +748,9 @@ class PaymentController extends Controller
 		}
 	}
 
+
+	
+
 	function cancelSubscription(Request $request){
 		$userid = $request->userid;
 		
@@ -757,10 +760,28 @@ class PaymentController extends Controller
 
 		
 		$haveSubAlready = NULL;
-		if($oldSub){
+		$user = User::where("userid", $userid)->first();
+			//check directly on stripe, if the user has a subscription
+			$haveActiveSubs = $this->getUserActiveSubscriptions($user->stripecustomerid);
+			if($haveActiveSubs){
+				$sub = $haveActiveSubs[0];
+				$sub->id;
+			}
+		if($oldSub || $haveActiveSubs){
 			// return $oldSub->sub_id;
+// 			return "Here";
+// 			if(!$oldSub && $haveActiveSubs){
+// 			    $oldSub = $haveActiveSubs[0];
+// 			 //   return "Here ". $oldSub->id;
+// 			}
 			try{
-				$haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
+			    $haveSubAlready = NULL;
+				if($oldSub){
+				    $haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
+				}
+				else if ($haveSubAlready){
+				    $haveSubAlready = $haveActiveSubs[0];
+				}
 				if($haveSubAlready->status === "active" || $haveSubAlready->status === "trialing"){
 					// cancel here
 					// $stripe = new \Stripe\StripeClient('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
@@ -782,8 +803,9 @@ class PaymentController extends Controller
 			}
 		}
 		else{
+			
 			return response()->json(['status' => "0",
-					'message'=> "User is not subscribed",
+					'message'=> "User is not subscribed " ,
 					'data' => null, 
 				]);
 		}
@@ -1273,6 +1295,60 @@ class PaymentController extends Controller
                
             //   $push[$i] = $pushsent;
             }
+	}
+
+
+
+	//ACH Payments
+	function createPaymentIntent(Request $request){
+
+		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+		$userid = $request->userid;
+		$user = User::where("userid", $userid)->first();
+		if($user->stripecustomerid !== NULL && $user->stripecustomerid !== ""){
+
+		}
+		else{
+			//create stripe customer id
+			
+			$customer = $stripe->customers->create(["name"=> $user->name, "email" => $user->email, 'description' => 'Braver Customer From ACH',]);
+			$stripeid= $customer['id'];
+            	$user->stripecustomerid = $stripeid;
+            	$user->save();
+		}
+		$amount = $request->amount * 100; // convert to cents
+
+		
+
+		try{
+			$intent = $stripe->paymentIntents->create([
+				'amount' => $amount,
+				'currency' => 'usd',
+				'setup_future_usage' => 'off_session',
+				'customer' => $user->stripecustomerid,
+				'payment_method_types' => ['us_bank_account'],
+				'payment_method_options' => [
+				  'us_bank_account' => [
+					'financial_connections' => ['permissions' => ['payment_method', 'balances']],
+				  ],
+				],
+			  ]);
+	  
+			  $clientSecret = $intent->client_secret;
+	  
+			  return response()->json([
+				  "message" => "Payment intent created",
+				  "status" => "1",
+				  "data" => ["client_secret" => $clientSecret, "intent"=> $intent]
+			  ]);
+		}
+		catch(\Exception $e){
+			return response()->json([
+				"message" => "Payment intent not created",
+				"status" => "0",
+				"data" => $e->getMessage()
+			]);
+		}
 	}
 
 }
