@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use App\Models\PaymentIntent;
 
 use Carbon\Carbon;
 
@@ -981,33 +982,53 @@ class PaymentController extends Controller
 	function stripeWebhook(Request $request){
 		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
 		$payload = json_decode($request->getContent(), true);
+		\Log::info("------------------------------------------------------");
 		\Log::info("Webhook stripe called");
 		
 		$event_id = $payload["id"];
 		$event_type = $payload["type"]; // customer.subscription.updated etc
-		$subData = $payload["data"]["object"];
+		\Log::info("Event is " . $event_type);
+		\Log::info("Event Data");
+		\Log::info($payload);
 		
-		$subid = $subData["id"];
-		$status = $subData["status"];
-		$cancel_at_period_end = $subData["cancel_at_period_end"];
 		
-		$dbSub = Subscription::where("sub_id", $subid)->first();
-// 		\Log::info("Status is " . $status);
+		if($event_type === "customer.subscription.updated" || $event_type === "customer.subscription.deleted"){
+			$subData = $payload["data"]["object"];
 		
-		$items = $subData["items"]["data"];
-		$firstPlan = $items[0]["plan"];
-		\Log::info($subData);
-		$interval = $firstPlan["interval"];
-		$plan_id = $firstPlan["id"];
-		$amount = $firstPlan["amount"];
-		if($dbSub){
-		    $dbSub->sub_status = $status;
-		    $dbSub->cancel_at_period_end = $cancel_at_period_end;
-		    $dbSub->sub_interval = $interval;
-		    $dbSub->plan = $plan_id;
-		    $dbSub->price = $amount;
-		    $dbSub->save();
+			$subid = $subData["id"];
+			$status = $subData["status"];
+			$cancel_at_period_end = $subData["cancel_at_period_end"];
+			
+			$dbSub = Subscription::where("sub_id", $subid)->first();
+			
+			
+			$items = $subData["items"]["data"];
+			$firstPlan = $items[0]["plan"];
+			\Log::info($subData);
+			$interval = $firstPlan["interval"];
+			$plan_id = $firstPlan["id"];
+			$amount = $firstPlan["amount"];
+			if($dbSub){
+			    $dbSub->sub_status = $status;
+			    $dbSub->cancel_at_period_end = $cancel_at_period_end;
+			    $dbSub->sub_interval = $interval;
+			    $dbSub->plan = $plan_id;
+			    $dbSub->price = $amount;
+			    $dbSub->save();
+			}
 		}
+		else if($event_type === "payment_intent.processing" || $event_type === "payment_intent.succeeded" || $event_type === "payment_intent.payment_failed"){
+			\Log::info("Payment Intent Event");
+			$subData = $payload["data"]["object"];
+			$paymentIntentId = $subdata["id"];
+			$isLive = $subData["livemode"];
+			$next_action = $subData["next_action"];
+			$payment_method = $subData["payment_method"];
+			
+			
+			
+		}
+		\Log::info("------------------------------------------------------");
 		
 		
 		return response()->json(['status' => "1",
@@ -1335,11 +1356,17 @@ class PaymentController extends Controller
 			  ]);
 	  
 			  $clientSecret = $intent->client_secret;
-	  
+			  $id = $intent->id; // payment intent id
+			  
+			  $dbintent = new PaymentIntent;
+			  $dbintent->payment_intent_id = $id;
+			  $dbintent->userid = $userid;
+			  $paymentIntentSaved = $dbintent->save();
+
 			  return response()->json([
 				  "message" => "Payment intent created",
 				  "status" => "1",
-				  "data" => ["client_secret" => $clientSecret, "intent"=> $intent]
+				  "data" => ["client_secret" => $clientSecret, "intent"=> $intent, "dbIntent" => $dbintent]
 			  ]);
 		}
 		catch(\Exception $e){
