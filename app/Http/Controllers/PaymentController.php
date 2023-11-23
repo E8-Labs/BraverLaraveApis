@@ -23,6 +23,7 @@ use App\Models\User\Notification;
 use App\Models\PaymentIntent;
 
 use Carbon\Carbon;
+use Kreait\Laravel\Firebase\Facades\Firebase;
 
 class PaymentController extends Controller
 {
@@ -1020,11 +1021,32 @@ class PaymentController extends Controller
 		else if($event_type === "payment_intent.processing" || $event_type === "payment_intent.succeeded" || $event_type === "payment_intent.payment_failed"){
 			\Log::info("Payment Intent Event");
 			$subData = $payload["data"]["object"];
-			$paymentIntentId = $subdata["id"];
+			$paymentIntentId = $subData["id"];
 			$isLive = $subData["livemode"];
 			$next_action = $subData["next_action"];
 			$payment_method = $subData["payment_method"];
 			
+			$intent = PaymentIntent::where("payment_intent_id", $paymentIntentId)->first();
+			if($intent){
+				$intent->mode = $isLive ? "Live" : "Test";
+				$intent->next_action = $next_action;
+				$intent->payment_method = $payment_method;
+				$intent->webhook_action = $event_type;
+				if($event_type === "payment_intent.processing"){
+					
+				}
+				else if($event_type === "payment_intent.succeded"){
+					// make the reservation here
+				}
+				else if($event_type === "payment_intent.payment_failed"){
+					// do not 
+				}
+				$intent->save();
+
+			}
+			else{
+				\Log::info("This payment intent does not exists ". $paymentIntentId);
+			}
 			
 			
 		}
@@ -1361,6 +1383,9 @@ class PaymentController extends Controller
 			  $dbintent = new PaymentIntent;
 			  $dbintent->payment_intent_id = $id;
 			  $dbintent->userid = $userid;
+			  $dbintent->invoiceid = $request->invoiceid;
+			  $dbintent->chatid = $request->chatid;
+			  $dbintent->reservation_id = $request->reservationid;
 			  $paymentIntentSaved = $dbintent->save();
 
 			  return response()->json([
@@ -1376,6 +1401,16 @@ class PaymentController extends Controller
 				"data" => $e->getMessage()
 			]);
 		}
+	}
+
+
+	function connectFirebaseDb(Request $request){
+		$database = Firebase::database();
+		$reference = $database->getReference('Settings');
+		$snapshot = $reference->getSnapshot();
+
+		$value = $snapshot->getValue();
+		return response()->json(["data" => "Hello there!", "settings" => $value]);
 	}
 
 }
