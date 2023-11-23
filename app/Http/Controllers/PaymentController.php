@@ -980,9 +980,11 @@ class PaymentController extends Controller
 	// }
 		//transactionId = $paymentIntentId in case of ACH Payments
 		function updateReservation($chatid, $transactionId, $invoice_id, $tip, $tax, $serviceFee, $totalAmount, $payment_status){
+		    \Log::info("Updating reservation");
 			$res = Reservation::where('chatid', $chatid)->first();
 			if($res){
-				DB::beginTransaction();
+			    \Log::info("Updating reservation found");
+				// DB::beginTransaction();
 				$res->dateadded = Carbon::now()->toDateTimeString();
 				$res->reservationstatus = ReservationStatus::StatusReserved;
 				$res->transactionid = $transactionId;
@@ -1008,7 +1010,8 @@ class PaymentController extends Controller
 					$invoice->payment_status = $payment_status;
 					$invoice->invoice_by = $res->reserved_for;
 					$saved = $invoice->save();
-					DB::commit();
+				// 	DB::commit();
+					\Log::info("Updating reservation returning with invoice " . $payment_status);
 					return $saved;
 				}
 				catch(\Exception $e){
@@ -1034,8 +1037,8 @@ class PaymentController extends Controller
 		$event_id = $payload["id"];
 		$event_type = $payload["type"]; // customer.subscription.updated etc
 		\Log::info("Event is " . $event_type);
-		\Log::info("Event Data");
-		\Log::info($payload);
+// 		\Log::info("Event Data");
+// 		\Log::info($payload);
 		
 		
 		if($event_type === "customer.subscription.updated" || $event_type === "customer.subscription.deleted"){
@@ -1050,7 +1053,7 @@ class PaymentController extends Controller
 			
 			$items = $subData["items"]["data"];
 			$firstPlan = $items[0]["plan"];
-			\Log::info($subData);
+// 			\Log::info($subData);
 			$interval = $firstPlan["interval"];
 			$plan_id = $firstPlan["id"];
 			$amount = $firstPlan["amount"];
@@ -1073,6 +1076,7 @@ class PaymentController extends Controller
 			
 			$intent = PaymentIntent::where("payment_intent_id", $paymentIntentId)->first();
 			if($intent){
+			    \Log::info("Intent Inside");
 				$intent->mode = $isLive ? "Live" : "Test";
 				$intent->next_action = $next_action;
 				$intent->payment_method = $payment_method;
@@ -1080,28 +1084,38 @@ class PaymentController extends Controller
 				$payment_status = "NEW";
 				if($event_type === "payment_intent.processing"){
 					//payment New
+					$database = Firebase::database();
+		                $reference = $database->getReference('Chats/' . $intent->chatid . "/" . $intent.invoiceid);
+		              //  $snapshot = $reference->getSnapshot();
+                        $reference->update(["paid" => false, "payment_status" => "NEW"]);
 				}
-				else if($event_type === "payment_intent.succeded"){
+				else if($event_type === "payment_intent.succeeded"){
 					// make the reservation here
 					//also update invoice in firebase
-
+                    \Log::info("Event Succeded");
 					//#1 Reserve
 					$payment_status = "CONFIRMED";
 					$updated = $this->updateReservation($intent->chatid, $paymentIntentId, $intent->invoiceid, $intent->tip, $intent->tax, $intent->service_fee, $intent->mount, $payment_status);
 					if($updated){
-
+                        \Log::info("Reservation updated");
 					}
 					else{
-
+                        \Log::info("Reservation Not updated");
 					}
 
 					//#2 Make Invoice Paid Here
-
+                    	$database = Firebase::database();
+		                $reference = $database->getReference('Chats/' . $intent->chatid . "/" . $intent.invoiceid);
+		              //  $snapshot = $reference->getSnapshot();
+                        $reference->update(["paid" => true, "payment_status" => "CONFIRMED"]);
+		                
 					
 				}
 				else if($event_type === "payment_intent.payment_failed"){
 					// do not 
+					$payment_status = "FAILED";
 				}
+				\Log::info("ReservationSaving Intent");
 				$intent->save();
 
 			}
