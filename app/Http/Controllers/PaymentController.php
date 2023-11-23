@@ -978,7 +978,52 @@ class PaymentController extends Controller
     // 		$invoice->timeline_status = $timeline_status;
     // 		$saved = $invoice->save();
 	// }
+		//transactionId = $paymentIntentId in case of ACH Payments
+		function updateReservation($chatid, $transactionId, $invoice_id, $tip, $tax, $serviceFee, $totalAmount, $payment_status){
+			$res = Reservation::where('chatid', $chatid)->first();
+			if($res){
+				DB::beginTransaction();
+				$res->dateadded = Carbon::now()->toDateTimeString();
+				$res->reservationstatus = ReservationStatus::StatusReserved;
+				$res->transactionid = $transactionId;
+				$res->save();
+				try{
+					$invoice = Invoice::where('reservation_id', $res->reservationid)->first();
+					 $message = "";
 
+					if($invoice){
+					
+					}
+					else{
+						$invoice = new Invoice();
+						$invoice->invoice_id = $invoice_id;
+					}
+					
+				
+					$amount = $totalAmount;
+				
+					$invoice->amount = $amount;
+					$invoice->stripe_charge_id = $transactionId;
+					$invoice->reservation_id = $res->reservationid;
+					$invoice->payment_status = $payment_status;
+					$invoice->invoice_by = $res->reserved_for;
+					$saved = $invoice->save();
+					DB::commit();
+					return $saved;
+				}
+				catch(\Exception $e){
+					return null;
+					\Log::info("-----------StripeLog---------------");
+					\Log::info("Stripe payment error " . $e->getMessage());
+					\Log::info($e);
+					\Log::info("-----------StripeLog---------------");
+				}
+				
+			}
+			else{
+				return null;
+			}
+		}
 
 	function stripeWebhook(Request $request){
 		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
@@ -1032,11 +1077,27 @@ class PaymentController extends Controller
 				$intent->next_action = $next_action;
 				$intent->payment_method = $payment_method;
 				$intent->webhook_action = $event_type;
+				$payment_status = "NEW";
 				if($event_type === "payment_intent.processing"){
-					
+					//payment New
 				}
 				else if($event_type === "payment_intent.succeded"){
 					// make the reservation here
+					//also update invoice in firebase
+
+					//#1 Reserve
+					$payment_status = "CONFIRMED";
+					$updated = $this->updateReservation($intent->chatid, $paymentIntentId, $intent->invoiceid, $intent->tip, $intent->tax, $intent->service_fee, $intent->mount, $payment_status);
+					if($updated){
+
+					}
+					else{
+
+					}
+
+					//#2 Make Invoice Paid Here
+
+					
 				}
 				else if($event_type === "payment_intent.payment_failed"){
 					// do not 
@@ -1359,7 +1420,24 @@ class PaymentController extends Controller
             	$user->stripecustomerid = $stripeid;
             	$user->save();
 		}
-		$amount = $request->amount * 100; // convert to cents
+
+
+		$tip = 0;
+			$serviceFee = 0;
+			$tax = 0;
+			if($request->has('tip')){
+				$tip = (double)$request->tip;
+			}
+
+			if($request->has('tax')){
+				$tax = (double)$request->tax;
+			}
+			if($request->has('service_fee')){
+				$serviceFee = (double)$request->service_fee;
+			}
+
+			$amount = $request->amount + $tax + $serviceFee + $tip;
+		$amount = $amount * 100; // convert to cents
 
 		
 
@@ -1386,6 +1464,10 @@ class PaymentController extends Controller
 			  $dbintent->invoiceid = $request->invoiceid;
 			  $dbintent->chatid = $request->chatid;
 			  $dbintent->reservation_id = $request->reservationid;
+			  $dbintent->amount = $amount;
+			  $dbintent->tax = $request->tax;
+			  $dbintent->tip = $request->tip;
+			  $dbintent->service_fee = $request->service_fee;
 			  $paymentIntentSaved = $dbintent->save();
 
 			  return response()->json([
