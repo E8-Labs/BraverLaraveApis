@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string("userid");
             $table->string("payment_method")->nullable();
             $table->string("webhook_action")->default("");
+            $table->string("reservation_id")->nullable();
             $table->timestamps();
         });
     }

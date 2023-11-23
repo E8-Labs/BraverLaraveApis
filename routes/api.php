@@ -117,6 +117,7 @@ Route::get("loadmenu",[MenuController::class,'loadMenu']);
 
 
 
+Route::post("firebase", [PaymentController::class, "connectFirebaseDb"]);
 
 
 
