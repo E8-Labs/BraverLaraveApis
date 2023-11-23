@@ -11,4 +11,5 @@ class UserType extends Model
     const TypeUser = "USER";
     const TypeTeam = "TEAM";
     const TypeAdmin = "ADMIN";
+    const TypeFreeUser = "FREEUSER";
 }

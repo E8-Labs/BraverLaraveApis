@@ -8,6 +8,8 @@ use App\Models\Auth\User;
 use App\Models\Auth\UserType;
 use App\Models\Auth\AccountStatus;
 use Illuminate\Support\Facades\Validator;
+use App\Models\NotificationTypes;
+use App\Models\User\Notification;
 
 use App\Http\Resources\User\UserProfileFullResource;
 use App\Http\Resources\User\UserProfileLiteResource;
@@ -109,14 +111,14 @@ class UserController extends Controller
 					'data' => null, 
 				]);
 			}
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
             if($user->role == 'ADMIN'){
 				return response()->json(['status' => "0",
 					'message'=> 'can not delete admin user ' . $request->userid,
 					'data' => $user, 
 				]);
 			}
-			$deleted = User::where('userid', $request->userid)->orWhere('id', $request->userid)->delete();
+			$deleted = User::where('userid', $request->userid)->delete();
 			
 			if($deleted){
 				return response()->json(['status' => "1",
@@ -160,19 +162,20 @@ class UserController extends Controller
 			    $user->accountstatus = AccountStatus::Approved;
 			    $user->role = $request->role;
 			    $saved = $user->save();
-			if($saved){
-				
-				return response()->json(['status' => "1",
-					'message'=> 'User approved',
-					'data' => new UserProfileFullResource($user), 
-				]);
-			}
-			else{
-				return response()->json(['status' => "0",
-					'message'=> 'Error approving user',
-					'data' => null, 
-				]);
-			}
+				if($saved){
+					$admin = User::where('role', 'ADMIN')->first();
+					Notification::add(NotificationTypes::AccountApproved, $user->id, $admin->userid, $user);
+					return response()->json(['status' => "1",
+						'message'=> 'User approved',
+						'data' => new UserProfileFullResource($user), 
+					]);
+				}
+				else{
+					return response()->json(['status' => "0",
+						'message'=> 'Error approving user',
+						'data' => null, 
+					]);
+				}
 			}
 			catch(\Exception $e){
 			    \Log::info('---------------- Exception approving  start----------------------');
@@ -212,10 +215,11 @@ class UserController extends Controller
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
-			$users = User::where('accountstatus', AccountStatus::Pending)->where('role', "!=", UserType::TypeAdmin)->take(50)->skip($off_set)->get();
+			$users = User::where('accountstatus', AccountStatus::Pending)->where('role', "!=", UserType::TypeAdmin)->where('role', "!=", 'TEAM')
+			->orderBy('name', 'ASC')->take(50)->skip($off_set)->get();
 			if($request->has('search')){
 				$search = $request->search;
-				$users = User::where('accountstatus', AccountStatus::Pending)->where('name', 'LIKE', "%$search%")->where('role', "!=", UserType::TypeAdmin)->take(50)->skip($off_set)->get();
+				$users = User::where('accountstatus', AccountStatus::Pending)->where('name', 'LIKE', "%$search%")->where('role', "!=", UserType::TypeAdmin)->where('role', "!=", 'TEAM')->orderBy('name', 'ASC')->take(50)->skip($off_set)->get();
 			}
 			else{
 
@@ -262,10 +266,11 @@ class UserController extends Controller
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
-			$users = User::where('accountstatus', AccountStatus::Approved)->where('role', "!=", 'ADMIN')->take(50)->skip($off_set)->get();
+			$users = User::where('accountstatus', AccountStatus::Approved)->where('role', "!=", 'ADMIN')->where('role', "!=", 'TEAM')
+			->orderBy('name', 'ASC')->take(50)->skip($off_set)->get();
 			if($request->has('search')){
 				$search = $request->search;
-				$users = User::where('accountstatus', AccountStatus::Approved)->where('name', 'LIKE', "%$search%")->where('role', "!=", 'ADMIN')->take(50)->skip($off_set)->get();
+				$users = User::where('accountstatus', AccountStatus::Approved)->where('name', 'LIKE', "%$search%")->where('role', "!=", 'ADMIN')->where('role', "!=", 'TEAM')->orderBy('name', 'ASC')->take(50)->skip($off_set)->get();
 			}
 			else{
 
@@ -311,10 +316,10 @@ class UserController extends Controller
 				$page = $request->page;
 			}
 			$off_set = $page * 50 - 50;
-			$users = User::where('accountstatus', AccountStatus::Approved)->where('role', "=", UserType::TypeTeam)->take(50)->skip($off_set)->get();
+			$users = User::where('accountstatus', AccountStatus::Approved)->where('role', "=", UserType::TypeTeam)->orderBy('name', 'ASC')->take(50)->skip($off_set)->get();
 			if($request->has('search')){
 				$search = $request->search;
-				$users = User::where('accountstatus', AccountStatus::Approved)->where('name', 'LIKE', "%$search%")->where('role', "=", UserType::TypeTeam)->take(50)->skip($off_set)->get();
+				$users = User::where('accountstatus', AccountStatus::Approved)->where('name', 'LIKE', "%$search%")->where('role', "=", UserType::TypeTeam)->orderBy('name', 'ASC')->take(50)->skip($off_set)->get();
 			}
 			else{
 

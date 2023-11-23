@@ -21,6 +21,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('demo:cron')->everyMinute();
+        // $schedule->command('birthdayemail:cron')->everyMinute();
     }
 
     /**

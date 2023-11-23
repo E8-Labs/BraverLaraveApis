@@ -26,9 +26,12 @@ class ChatResource extends JsonResource
         $chatUserIds = ChatUser::where('chatid', $this->chatid)->pluck('userid')->toArray();
         $res = Reservation::where('chatid', $this->chatid)->first();
         $users = User::whereIn('userid', $chatUserIds)->get();
+
+
+        $unread = ChatUser::where('chatid', $this->chatid)->where('userid', $request->userid)->sum('unreadcount');
         return [
             "chatid" => $this->chatid,
-            'reservationid' => $res->reservationid,
+            'reservationid' => $res != null ? $res->reservationid : null,
             'reservation' => $res,
             "productid" => $this->productid,
             "dateadded" => $this->dateadded,
@@ -40,6 +43,7 @@ class ChatResource extends JsonResource
             "customaddress" => $this->customaddress,
             "product" => new ListingResource($p),
             "users" => UserProfileLiteResource::collection($users),
+            'unread' => $unread,
         ];
     }
 }

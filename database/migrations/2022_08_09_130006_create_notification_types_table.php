@@ -25,6 +25,7 @@ return new class extends Migration
             ['id'=> NotificationTypes::InvoicePaid, 'name' => 'Invoice Paid'],
             ['id'=> NotificationTypes::NewUser, 'name' => 'New User'],
             ['id'=> NotificationTypes::AdminBroadcast, 'name' => 'Admin Broadcast'],
+            ['id'=> NotificationTypes::AccountApproved, 'name' => 'Account Approved'],
             
         ]);
     }

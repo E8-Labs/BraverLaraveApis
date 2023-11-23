@@ -34,7 +34,7 @@ class Controller extends BaseController
             //Set image whole path here 
             $filePath = $_SERVER['DOCUMENT_ROOT'].$domain. $fileName;
 
-// return $filePath;
+            // return $filePath;
             if(!Storage::exists($_SERVER['DOCUMENT_ROOT'].$domain)){
                 Storage::makeDirectory($_SERVER['DOCUMENT_ROOT'].$domain);
             }

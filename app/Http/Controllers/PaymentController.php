@@ -11,6 +11,7 @@ use App\Models\Chat\ChatUser;
 use App\Models\Listing\Reservation;
 use App\Models\Listing\ReservationStatus;
 use App\Models\Card;
+use App\Models\Subscription;
 use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Hash;
@@ -19,13 +20,14 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use App\Models\PaymentIntent;
 
 use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
     //
-    private $coinbase_api_key = "ecbb36a1-1305-4cfb-917a-2a34561df982";
+    private $coinbase_api_key = "b36967ae-8715-44d7-808b-15ee5a29bb60";//"ecbb36a1-1305-4cfb-917a-2a34561df982";
 
     function addCard(Request $request){
     	$validator = Validator::make($request->all(), [
@@ -336,6 +338,55 @@ class PaymentController extends Controller
 
 	}
 
+	private function CreateInvoiceOnServer($request, $charge){
+		$invoice = Invoice::where('reservation_id', $request->reservation_id)->first();
+			 $message = "";
+			 
+			if($invoice){
+        		
+			}
+			else{
+				$invoice = new Invoice();
+				$invoice->invoice_id = $request->invoice_id;
+			}
+			$tip = 0;
+			$serviceFee = 0;
+			$tax = 0;
+			if($request->has('tip')){
+				$tip = (double)$request->tip;
+			}
+
+			if($request->has('tax')){
+				$tax = (double)$request->tax;
+			}
+			if($request->has('service_fee')){
+				$serviceFee = (double)$request->service_fee;
+			}
+
+			$amount = $request->amount + $tax + $serviceFee + $tip;
+
+			$invoice->amount = $request->amount;
+    		// echo "this is charge";
+    		$invoice->stripe_charge_id = $charge["stripe_charge_id"];
+			$invoice->crypto_charge_id = $charge["crypto_charge_id"];
+    		// $price = $charge["price"];
+    		$payment_status = $charge["payments_status"];
+    		$timeline_status = $charge["timeline_status"];
+
+    		// $invoice->crypto_charge_code = $code;
+    		$invoice->invoice_by = $request->userid;
+    		$invoice->reservation_id = $request->reservation_id;
+    		// $invoice->crypto_charge_id = $charge_id;
+    		// $invoice->crypto_charge_url = $url;
+    		$invoice->payment_status = $payment_status;
+    		$invoice->timeline_status = $timeline_status;
+			$invoice->service_fee = $serviceFee;
+			$invoice->tip = $tip;
+			$invoice->tax = $tax;
+    		$saved = $invoice->save();
+			return $saved;
+	}
+
 
 	function makeReservation(Request $request){
 		$validator = Validator::make($request->all(), [
@@ -346,8 +397,10 @@ class PaymentController extends Controller
 			"yachtid" => 'required',
 			"amount" => 'required',
 			"chatid" => 'required',
+			"invoice_id" => 'required',
 
 				]);
+
 
 			if($validator->fails()){
 				return response()->json(['status' => "0",
@@ -376,6 +429,7 @@ class PaymentController extends Controller
 			DB::beginTransaction();
 			// $res->reservationid = uniqid();
 			$res->chatid = $request->chatid;
+			
 			$res->reservedfor = $request->userid;
 			$res->dateadded = Carbon::now()->toDateTimeString();
 			$yachtid = $request->yachtid;
@@ -417,6 +471,7 @@ class PaymentController extends Controller
 				$source = $request->paymentmethod;
 			}
 			$cost = $res->amountpaid * 100;
+
 			// return $cost;
 			$charge = $this->chargeUser($cost, $user->stripecustomerid, $res->reservationdescription, $source);
 			if($charge->id == NULL){
@@ -431,6 +486,15 @@ class PaymentController extends Controller
 				$res->reservationstatus = ReservationStatus::StatusReserved;
 				$res->transactionid = $trid;
 				$res->save();
+				try{
+					$invoiceCreated = $this->CreateInvoiceOnServer($request, ["stripe_charge_id" => $trid, "crypto_charge_id"=> null, "payment_status"=> "Confirmed", "timeline_status" => "Completed"]);
+				}
+				catch(\Exception $e){
+					\Log::info("-----------StripeLog---------------");
+					\Log::info("Stripe payment error " . $e->getMessage());
+					\Log::info($e);
+					\Log::info("-----------StripeLog---------------");
+				}
 				DB::commit();
 				$chat = ChatThread::where('chatid', $request->chatid)->first();
 				$this->sendNotToAllUsers($user, $chat);
@@ -453,6 +517,299 @@ class PaymentController extends Controller
 
 			
 
+	}
+
+	function getUserActiveSubscriptions($stripecustomerid){
+		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+        // $haveActiveSubs = NULL;
+
+        $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+        // $paymentController = new PaymentController;
+        $haveActiveSubs = NULL;//$paymentController->getUserActiveSubscriptions($this->stripecustomerid);
+
+        try{
+            \Log::info("Checking active");
+            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $stripecustomerid, "status" => "active"]);
+                // return $haveActiveSubs;
+        }
+        catch(\Exception $e){
+            \Log::info("No active subs");
+        }
+        if($haveActiveSubs === NULL || count($haveActiveSubs->data) === 0){
+            try{
+                \Log::info("Checking trial");
+            $haveActiveSubs = $stripe->subscriptions->all(['limit' => 30, 'customer' => $stripecustomerid, "status" => "trialing"]);
+                // return $haveActiveSubs;
+            }
+            catch(\Exception $e){
+                \Log::info("No trials subs " . $e->getMessage());
+            }
+        }
+
+        if($haveActiveSubs){
+        	// $data = $haveActiveSubs->data;
+        	return $haveActiveSubs->data;
+        }
+        else{
+        	return NULL;
+        }
+	}
+
+
+
+
+	function upgradeSubscription(Request $request){
+		$userid = $request->userid;
+		$plan = $request->plan; // subscribe to new plan
+		$user = User::where('userid', $userid)->first();
+		$plans = $this->getUserActiveSubscriptions($user->stripecustomerid);
+		if($plans === NULL || count($plans) === 0){
+			//if no previous subscription, then just subscribe
+			return $this->createSubscription($request);
+		}
+		else{
+			$sub = $plans[0];
+			$isTrial = $this->checkIfTrial($sub);
+			if($isTrial){
+				return response()->json(['status' => "1",
+								'message'=> "Please wait for the trial to expire",
+								'data' => NULL, 
+				]);
+			}
+			// return "One active subscription";
+
+			//active subscription. We assume and will enforce only one active or trialing subscription for a user
+			
+
+			$id = $sub->id;
+			//check if the user already has yearly subscription, then 
+
+			$subItem = $sub->items->data[0];
+			$subItemId = $subItem->id;
+			$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+			$updated = $stripe->subscriptions->update(
+				$id,
+				["items" =>[["id" => $subItemId, "price" => $plan]]]
+			);
+
+			if($updated){
+				//if susccessfull then update the database as well
+				return response()->json(['status' => "1",
+								'message'=> "Plan upgraded",
+								'data' => $updated, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+								'message'=> "Error upgrading the plan",
+								'data' => $updated, 
+				]);
+			}
+
+
+		}
+		
+
+
+	}
+
+	 function checkIfTrial($plan){
+	 	// foreach($plans as $plan){
+	 		if($plan->status === "trialing"){
+	 			return TRUE;
+	 		}
+	 	// }
+	 	return FALSE;
+	 }
+
+	function createSubscription(Request $request){
+		$userid = $request->userid;
+		$plan = $request->plan;
+		$card = null;
+		if($request->has("payment_method")){
+		    $card = $request->payment_method;
+		}
+		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+		$oldSub = Subscription::where('userid', $userid)->where('plan', $plan)->orderBy('id', 'DESC')->first();
+
+		
+		$haveSubAlready = NULL;
+		if($oldSub){
+			// return $oldSub->sub_id;
+			try{
+				$haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
+				if($haveSubAlready->status === "active"){
+					return response()->json(['status' => "1",
+								'message'=> "Subscription already exists",
+								'data' => $sub, 
+					]);
+				}
+				if($haveSubAlready->status === "trialing" ){
+					return response()->json(['status' => "1",
+								'message'=> "Subscription in trial mode",
+								'data' => $sub, 
+					]);
+				}
+				// return $haveSubAlready;
+			}
+			catch(\Exception $e){
+
+			}
+		}
+		
+
+		$user = User::where('userid', $userid)->first();
+		if($user){
+			if($user->stripecustomerid !== NULL){
+				// we can create subscription
+				
+				if($haveSubAlready && $haveSubAlready->status === "paused"){
+					\Log::info($haveSubAlready);
+					$sub = $stripe->subscriptions->resume(
+						$haveSubAlready->id,
+						['billing_cycle_anchor' => 'now']
+					);
+					$oldSub->status = $sub->status;
+					$oldSub->save();
+					return response()->json(['status' => "1",
+								'message'=> "Subscription already existed & paused for same product so renewed",
+								'data' => $sub, 
+					]);
+				}
+				else{
+				    $code = null;
+				    if($request->has("promo_code")){
+				        $code = $request->promo_code;
+				    }
+				    $params = [
+  					'customer' => $user->stripecustomerid,
+  		// 			"promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
+  					"trial_from_plan" => true, // change it to true to avail trial
+  					// "trial_period_days" => 90,
+  					'items' => [
+    					['price' => $plan],
+  					],
+					];
+				    if($card !== null){
+				        $params = ['default_payment_method' => $card, 
+				            'customer' => $user->stripecustomerid,
+				            // "promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
+  					        "trial_from_plan" => true, // change it to true to avail trial
+  					        // "trial_period_days" => 90,
+  					        'items' => [
+    					         ['price' => $plan],
+  					        ],
+  					     ];
+				    }
+				    if($code !== null){
+				        $params["promotion_code"] = $code;
+				    }
+					$sub = $stripe->subscriptions->create($params);
+					if($sub->id === NULL){
+					// failed to create charge
+						return response()->json(['status' => "0",
+							'message'=> "Some error occurred creating charge",
+							'data' => $sub, 
+						]);
+					}
+					else{
+					// subscription was created
+						$s = new Subscription;
+						$s->userid = $userid;
+						$s->plan = $plan;
+						$s->sub_id = $sub->id;
+						$s->sub_status = $sub->status;
+						$s->start_date = $sub->start_date . "";
+						$saved = $s->save();
+						if($saved){
+							return response()->json(['status' => "1",
+								'message'=> "Subscription was created",
+								'data' => $sub, 
+							]);
+						}
+
+					}
+				}
+				
+			}
+			else{
+				// add a card
+				return response()->json(['status' => "0",
+						'message'=> "No payment method found",
+						'data' => NULL, 
+					]);
+			}
+		}
+		else{
+			// user does not exist
+			return response()->json(['status' => "0",
+						'message'=> "No such user",
+						'data' => NULL, 
+					]);
+		}
+	}
+
+
+	
+
+	function cancelSubscription(Request $request){
+		$userid = $request->userid;
+		
+
+		$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+		$oldSub = Subscription::where('userid', $userid)->orderBy('id', 'DESC')->first();
+
+		
+		$haveSubAlready = NULL;
+		$user = User::where("userid", $userid)->first();
+			//check directly on stripe, if the user has a subscription
+			$haveActiveSubs = $this->getUserActiveSubscriptions($user->stripecustomerid);
+			if($haveActiveSubs){
+				$sub = $haveActiveSubs[0];
+				$sub->id;
+			}
+		if($oldSub || $haveActiveSubs){
+			// return $oldSub->sub_id;
+// 			return "Here";
+// 			if(!$oldSub && $haveActiveSubs){
+// 			    $oldSub = $haveActiveSubs[0];
+// 			 //   return "Here ". $oldSub->id;
+// 			}
+			try{
+			    $haveSubAlready = NULL;
+				if($oldSub){
+				    $haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
+				}
+				else if ($haveSubAlready){
+				    $haveSubAlready = $haveActiveSubs[0];
+				}
+				if($haveSubAlready->status === "active" || $haveSubAlready->status === "trialing"){
+					// cancel here
+					// $stripe = new \Stripe\StripeClient('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
+					$cancelled = $stripe->subscriptions->cancel($haveSubAlready->id, []);
+					if($cancelled){
+					    $oldSub->delete();
+					}
+					return response()->json(['status' => "1",
+						'message'=> "Subscription cancelled",
+						'data' => $cancelled, 
+					]);
+				}
+			}
+			catch(\Exception $e){
+				return response()->json(['status' => "0",
+					'message'=> $e->getMessage(),
+					'data' => null, 
+				]);
+			}
+		}
+		else{
+			
+			return response()->json(['status' => "0",
+					'message'=> "User is not subscribed " ,
+					'data' => null, 
+				]);
+		}
 	}
 
 
@@ -491,6 +848,7 @@ class PaymentController extends Controller
 			"userid" => 'required',
 			"amount" => 'required',
 
+
 				]);
 
 			if($validator->fails()){
@@ -516,8 +874,19 @@ class PaymentController extends Controller
 			if($request->has('name')){
 				$name = $request->name;
 			}
+			$tip = 0;
+			$serviceFee = 0;
+			$tax = 0;
+			if($request->has('tip')){
+				$tip = (double)$request->tip;
+			}
 
-
+			if($request->has('tax')){
+				$tax = (double)$request->tax;
+			}
+			if($request->has('service_fee')){
+				$serviceFee = (double)$request->service_fee;
+			}
 
 			$invoice = Invoice::where('invoice_id', $request->invoice_id)->first();
 			 $message = "";
@@ -538,8 +907,10 @@ class PaymentController extends Controller
 				$invoice->invoice_id = $request->invoice_id;
 			}
 
+			$amount = $request->amount + $tax + $serviceFee + $tip;
+
 			if($charge == null){
-        		$charge = $this->createCryptoCharge($request->amount, $description, $name);
+        		$charge = $this->createCryptoCharge($amount, $description, $name);
     		}
     		else{
     		    $message = "Charge already exists and not expired and not cancelled";
@@ -559,6 +930,9 @@ class PaymentController extends Controller
     		$invoice->crypto_charge_url = $url;
     		$invoice->payment_status = $payment_status;
     		$invoice->timeline_status = $timeline_status;
+			$invoice->service_fee = $serviceFee;
+			$invoice->tip = $tip;
+			$invoice->tax = $tax;
     		$saved = $invoice->save();
     		if($saved){
     			return response()->json(['status' => "1",
@@ -572,6 +946,95 @@ class PaymentController extends Controller
 					'data' => null, 
 				]);
     		}
+	}
+
+	// function createNewInvoice(Request $request){
+	// 	$key = $request->apikey;
+	// 		if($key != $this->APIKEY){ // get value from constants
+	// 			return response()->json(['status' => "0",
+	// 				'message'=> 'invalid api key',
+	// 				'data' => null, 
+	// 			]);
+	// 		}
+	// 		$description = '';
+	// 		if($request->has('description')){
+	// 			$description = $request->description;
+	// 		}
+	// 		$name = 'Charge';
+	// 		if($request->has('name')){
+	// 			$name = $request->name;
+	// 		}
+	// 	$invoice = new Invoice();
+	// 	$invoice->invoice_id = $request->invoice_id;
+
+	// 	$charge = $this->createCryptoCharge($request->amount + $request->tax + $request->service_fee, $description, $name);
+	// 	$invoice->crypto_charge_code = $code;
+    // 		$invoice->invoice_by = $request->userid;
+    // 		$invoice->reservation_id = $request->reservation_id;
+    // 		$invoice->crypto_charge_id = $charge_id;
+    // 		$invoice->crypto_charge_url = $url;
+    // 		$invoice->payment_status = $payment_status;
+    // 		$invoice->timeline_status = $timeline_status;
+    // 		$saved = $invoice->save();
+	// }
+
+
+	function stripeWebhook(Request $request){
+		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+		$payload = json_decode($request->getContent(), true);
+		\Log::info("------------------------------------------------------");
+		\Log::info("Webhook stripe called");
+		
+		$event_id = $payload["id"];
+		$event_type = $payload["type"]; // customer.subscription.updated etc
+		\Log::info("Event is " . $event_type);
+		\Log::info("Event Data");
+		\Log::info($payload);
+		
+		
+		if($event_type === "customer.subscription.updated" || $event_type === "customer.subscription.deleted"){
+			$subData = $payload["data"]["object"];
+		
+			$subid = $subData["id"];
+			$status = $subData["status"];
+			$cancel_at_period_end = $subData["cancel_at_period_end"];
+			
+			$dbSub = Subscription::where("sub_id", $subid)->first();
+			
+			
+			$items = $subData["items"]["data"];
+			$firstPlan = $items[0]["plan"];
+			\Log::info($subData);
+			$interval = $firstPlan["interval"];
+			$plan_id = $firstPlan["id"];
+			$amount = $firstPlan["amount"];
+			if($dbSub){
+			    $dbSub->sub_status = $status;
+			    $dbSub->cancel_at_period_end = $cancel_at_period_end;
+			    $dbSub->sub_interval = $interval;
+			    $dbSub->plan = $plan_id;
+			    $dbSub->price = $amount;
+			    $dbSub->save();
+			}
+		}
+		else if($event_type === "payment_intent.processing" || $event_type === "payment_intent.succeeded" || $event_type === "payment_intent.payment_failed"){
+			\Log::info("Payment Intent Event");
+			$subData = $payload["data"]["object"];
+			$paymentIntentId = $subdata["id"];
+			$isLive = $subData["livemode"];
+			$next_action = $subData["next_action"];
+			$payment_method = $subData["payment_method"];
+			
+			
+			
+		}
+		\Log::info("------------------------------------------------------");
+		
+		
+		return response()->json(['status' => "1",
+					'message'=> 'Handled',
+					'data' => null, 
+				]);
 	}
 
 
@@ -853,6 +1316,66 @@ class PaymentController extends Controller
                
             //   $push[$i] = $pushsent;
             }
+	}
+
+
+
+	//ACH Payments
+	function createPaymentIntent(Request $request){
+
+		$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+		$userid = $request->userid;
+		$user = User::where("userid", $userid)->first();
+		if($user->stripecustomerid !== NULL && $user->stripecustomerid !== ""){
+
+		}
+		else{
+			//create stripe customer id
+			
+			$customer = $stripe->customers->create(["name"=> $user->name, "email" => $user->email, 'description' => 'Braver Customer From ACH',]);
+			$stripeid= $customer['id'];
+            	$user->stripecustomerid = $stripeid;
+            	$user->save();
+		}
+		$amount = $request->amount * 100; // convert to cents
+
+		
+
+		try{
+			$intent = $stripe->paymentIntents->create([
+				'amount' => $amount,
+				'currency' => 'usd',
+				'setup_future_usage' => 'off_session',
+				'customer' => $user->stripecustomerid,
+				'payment_method_types' => ['us_bank_account'],
+				'payment_method_options' => [
+				  'us_bank_account' => [
+					'financial_connections' => ['permissions' => ['payment_method', 'balances']],
+				  ],
+				],
+			  ]);
+	  
+			  $clientSecret = $intent->client_secret;
+			  $id = $intent->id; // payment intent id
+			  
+			  $dbintent = new PaymentIntent;
+			  $dbintent->payment_intent_id = $id;
+			  $dbintent->userid = $userid;
+			  $paymentIntentSaved = $dbintent->save();
+
+			  return response()->json([
+				  "message" => "Payment intent created",
+				  "status" => "1",
+				  "data" => ["client_secret" => $clientSecret, "intent"=> $intent, "dbIntent" => $dbintent]
+			  ]);
+		}
+		catch(\Exception $e){
+			return response()->json([
+				"message" => "Payment intent not created",
+				"status" => "0",
+				"data" => $e->getMessage()
+			]);
+		}
 	}
 
 }

@@ -88,12 +88,21 @@ class NotificationController extends Controller
 			if($request->has('page')){
 				$page = $request->page;
 			}
+			
 			$off_set = $page * $limit - $limit;
-
+// return "Page is " . $off_set;
 			$nots = Notification::where('to_user', $request->userid)->orWhereNull('to_user')->skip($off_set)->take($limit)->orderBy('created_at', 'DESC')->get();
-			return response()->json(['status' => "1",
+			try{
+			    return response()->json(['status' => "1",
 					'message'=> 'Notifications obtained',
 					'data' => NotificationResource::collection($nots), 
 				]);
+			}
+			catch(\Exception $e){
+			    return response()->json(['status' => "0",
+					'message'=> 'Notifications not obtained ' . $e,
+					'data' => null, 
+				]);
+			}
     }
 }

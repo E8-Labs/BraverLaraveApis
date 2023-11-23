@@ -4,7 +4,7 @@ namespace App\Http\Resources\User;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserProfileLiteResource extends JsonResource
+class UserChatProfileResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

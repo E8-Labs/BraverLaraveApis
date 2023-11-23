@@ -12,6 +12,8 @@ use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuthForgotPasswordController;
 
+use App\Http\Controllers\Auth\SocialLoginController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -39,18 +41,34 @@ Route::post('reset-password', [AuthForgotPasswordController::class, 'submitReset
 Route::post("reset-password-admin",[AuthForgotPasswordController::class,'resetPasswordAdmin']);
 
 
+Route::post("sendTestEmail",[UserAuthController::class,'sendWelcomeEmail']);
 Route::post("checkemail",[UserAuthController::class,'checkEmailExists']);
 Route::post("checkcode",[UserAuthController::class,'checkCode']);
 Route::post("checkphone",[UserAuthController::class,'checkPhoneExists']);
 Route::post("registernewuser",[UserAuthController::class,'Register']);
 Route::post("login",[UserAuthController::class,'login']);
+
+Route::post("check_social_Login_exists",[SocialLoginController::class,'isSocialLoginAccountExists']);
+Route::post("register_social", [SocialLoginController::class, 'RegisterUserWithSocial']);
+
+
+
+Route::post("generate_hash", [UserAuthController::class, "generateWebAccessCode"]);
+Route::post("check_web_access_code", [UserAuthController::class, "checkWebAccessCode"]);
 Route::post("deleteuser",[UserController::class,'deleteUser']);
 Route::post("updateuser",[UserAuthController::class,'updateUser']);
+Route::post("redeem_code",[UserAuthController::class,'redeemOfferCode']);
 Route::post("updateinvitecode",[UserAuthController::class,'updateInviteCode']);
 Route::post("approveuser",[UserController::class,'approveUser']);
 
 Route::post("addcard",[PaymentController::class,'addCard']);
 Route::post("cardlist",[PaymentController::class,'cardList']);
+Route::post("create_subscription", [PaymentController::class, "createSubscription"]);
+Route::post("upgrade_subscription", [PaymentController::class, "upgradeSubscription"]);
+Route::post("cancel_subscription", [PaymentController::class, "cancelSubscription"]);
+Route::post("create_payment_intent", [PaymentController::class, "createPaymentIntent"]);
+
+Route::post("send_st_webhook", [PaymentController::class, "stripeWebhook"]);
 
 Route::post("addyacht",[ListingController::class,'addListing']);
 Route::post("deleteyacht",[ListingController::class,'deleteListing']);
@@ -66,6 +84,7 @@ Route::get("createchekrreport",[UserAuthController::class,'createChekrReport']);
 //Chat
 Route::post("createchat",[ChatController::class,'createChat']);
 Route::post("uploadchatimage",[ChatController::class,'uploadChatImage']);
+Route::post("uploadfile", [ChatController::class, "uploadChatPdf"]);
 Route::post("updatechat",[ChatController::class,'updateChat']);
 Route::get("getchatbyid",[ChatController::class,'getChatById']);
 Route::get("chatlistteam",[ChatController::class,'getTeamChat']);

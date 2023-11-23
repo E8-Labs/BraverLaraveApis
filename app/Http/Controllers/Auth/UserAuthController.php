@@ -10,6 +10,10 @@ use App\Models\Auth\AccountStatus;
 use App\Models\Auth\UserType;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use App\Models\User\OfferCodeSubscription;
+use App\Models\User\UserOfferCodeSubscription;
+use App\Models\BraverWebAccessCodes;
+use Illuminate\Support\Facades\Mail;
 
 
 use Illuminate\Support\Facades\Hash;
@@ -116,8 +120,8 @@ class UserAuthController extends Controller
 			// 'phone' => 'required|unique:user',
 			'password' => 'required|string|max:40',
 			"apikey" => 'required',
-			'ssn' => 'required',
-			'last_name' => 'required',
+			// 'ssn' => 'required',
+			// 'last_name' => 'required',
 
 				]);
 
@@ -163,6 +167,9 @@ class UserAuthController extends Controller
 		if($req->has('last_name')){
 			$user->lastname = $req->last_name;
 		}
+		else{
+			$user->lastname = "";
+		}
 		$user->email=$req->email;
 		$role = UserType::TypeUser;
 		if($req->has('role')){
@@ -205,6 +212,13 @@ class UserAuthController extends Controller
    			$user->url = "/". $folder. "/storage/app/Images/". $fileName;
 
 		}
+		else{
+		    return response()->json(['status' => "0",
+					'message'=> 'Image not added',
+					'data' => null, 
+					'error' => 'error',
+				]);
+		}
 		
 		$user->password=Hash::make($req->password);
 		
@@ -232,12 +246,22 @@ class UserAuthController extends Controller
 			//send push
 			$profile = User::where('userid', $user_id)->first();
 			$user = $profile;
-
-			
+			$candidate_id = $this->createCandidate($profile);
+			// echo "cand id " . $candidate_id;
+			$invitation = null;
+			if($candidate_id){
+				User::where('userid', $user_id)->update(['chekrcandidateid' => $candidate_id]);
+				// echo "Send invitation";
+				$invitation = ReportController::sendInvitation($candidate_id);
+				// echo "Invitation sent response";
+				 // return  ["invitation" => $invitation];
+			}
+			$this->sendWelcomeEmail($user);
 			   return response()->json([
 			   		'message' => 'User registered',
 			   		'status' => "1",
 			   		'data' => new UserProfileFullResource($profile),
+			   		"invitation" => $invitation
 			   ]);
 		    }
 		else
@@ -267,6 +291,47 @@ class UserAuthController extends Controller
 				]);
 		}
 		 
+		}
+
+
+		function redeemOfferCode(Request $request){
+			$code = $request->offer_code;
+			//check code exists
+			$exists = OfferCodeSubscription::where('offer_code', $code)->first();
+			if(!$exists){
+				return response()->json(['status' => "0",
+					'message'=> 'Invalid offer code',
+					'data' => null, 
+				]);
+			}
+
+			//check if user is  already redeemed the code
+			$redeemed = UserOfferCodeSubscription::where('user_id', $reqeust->userid)->first();
+			if($exists){
+				return response()->json(['status' => "0",
+					'message'=> 'Already redeemed the code',
+					'data' => null, 
+				]);
+			}
+
+			$ucode = new UserOfferCodeSubscription;
+			$ucode->offer_code = $code;
+			$ucode->userid = $request->userid;
+			$saved = $ucode->save();
+			if($saved){
+				$profile = User::where('userid', $request->userid)->first();
+				return response()->json(['status' => "1",
+					'message'=> 'Code Redeemed',
+					'data' => new UserProfileFullResource($profile), 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'Error redeeming the code',
+					'data' => null, 
+				]);
+			}
+
 		}
 
 
@@ -312,7 +377,7 @@ class UserAuthController extends Controller
                         	if($user->dob){
                         	    // return ["date" => "". $user->dob];
                         	    $dob = Carbon::createFromFormat('m/d/Y', $user->dob)->format('Y-m-d');
-                        	    // $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
+                        	    $work_locations = ['country' => 'US', 'state' => 'CA', 'city' => "San Diego"];
         
                         	    $data = [
 			        		        "first_name" => $user->name,
@@ -320,25 +385,32 @@ class UserAuthController extends Controller
 			        		        "phone" => $user->phone,
 			        		        "email" => $user->email,
 			        		        "dob" => $dob,
-			        		        "ssn" => $user->ssn,
+			        		        // "ssn" => $user->ssn,
 			        		        "zipcode"=>$user->zip,
-			        		        // 'work_locations[]' => $work_locations
+			        		        'work_locations[]' => $work_locations
+			        		        // "work_locations[][city]" => "Lahore",
+                     //         		"work_locations[][country]" => "PK",
 			        		    ];
 			        		    
 			        		    $json = $this->createCheckrCandidate($data);
 			        		   // echo json_encode($json);
-			        		    if(array_key_exists('id', $json)){
-			        		    	$user->chekrcandidateid = $json['id'];
+			        		    if($json){
+									if(array_key_exists('id', $json)){
+			        		    		$user->chekrcandidateid = $json['id'];
 			        		        
-			        		    	User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
-									return $json['id'];
+			        		    		User::where('userid', $user->userid)->update(['chekrcandidateid' => $json["id"]]);
+										return $json['id'];
 	
+			        		    	}
+			        		    	else{
+	                    	       	 	$chekr_error = $json['error'];
+	                    	        	echo json_encode($json);
+	                    	        	// die();
+	                    	        	return NULL;
+			        		    	}
 			        		    }
 			        		    else{
-	                    	        $chekr_error = $json['error'];
-	                    	        // echo json_encode($json);
-	                    	        // die();
-	                    	        return NULL;
+			        		    	return NULL;
 			        		    }
                         	}
                         	else{
@@ -504,7 +576,7 @@ class UserAuthController extends Controller
 				]);
 			}
 			
-			$user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+			$user = User::where('userid', $request->userid)->first();
 			$user->invitedbycode = $request->invitecode;
 			$done = $user->save();
 			if($done){
@@ -547,7 +619,7 @@ class UserAuthController extends Controller
 
 			$params = array();
        
-       $user = User::where('userid', $request->userid)->orWhere('id', $request->userid)->first();
+       $user = User::where('userid', $request->userid)->first();
             
        $checker_data = array();
 
@@ -763,5 +835,119 @@ class UserAuthController extends Controller
 				]);
 			}
         }
+
+
+        function sendWelcomeEmail(User $user = null){
+		
+				// $profile = Profiles::where('user_id', $user->id)->first();
+				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/Welcome', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to($user->email,'Welcome')->subject('Welcome to Braver');
+                        // $message->from("info@braverhospitality.com");
+                    });
+
+				return true;
+		}
+
+
+		//subscription authentication related logic
+		function generateWebAccessCode(Request $request){
+			$apikey = null;
+			if($request->has('apikey')){
+				$apikey = $request->apikey;
+				if($apikey != $this->APIKEY){ // get value from constants
+					return response()->json(['status' => "0",
+						'message'=> 'invalid api key',
+						'data' => null, 
+					]);
+				}
+				$userid = $request->userid;
+
+				$hash = sha1(time());
+				BraverWebAccessCodes::where("userid", $userid)->delete();
+				$code = new BraverWebAccessCodes;
+				$code->userid = $userid;
+				$code->code = $hash;
+				$saved = $code->save();
+				if($saved){
+					return response()->json(['status' => "1",
+						'message'=> 'Hashed code',
+						'data' => $code, 
+					]);
+				}
+			}
+			else{
+				return response()->json([
+					"status"=> "0",
+					"message"=> "Invalid api key",
+					"data" => null
+				]);
+			}
+			//BraverWebAccessCodes
+
+		}
+
+
+		function checkWebAccessCode(Request $request){
+			$apikey = null;
+			if($request->has('apikey')){
+				$apikey = $request->apikey;
+				if($apikey != $this->APIKEY){ // get value from constants
+					return response()->json(['status' => "0",
+						'message'=> 'invalid api key',
+						'data' => null, 
+					]);
+				}
+				$reqcode = $request->code;
+
+				$code = BraverWebAccessCodes::where("code", $reqcode)->first();
+				if(!$code){
+					return response()->json(['status' => "0",
+						'message'=> 'invalid code',
+						'data' => null, 
+					]);
+				}
+
+				$nowTime = Carbon::now();
+				$codeGenerationTime = Carbon::parse($code->created_at);
+
+				$totalDuration = $nowTime->diffInSeconds($codeGenerationTime);
+				if($totalDuration > 60){
+					// if greater than 60 seconds then the code is expired
+					$code->delete();
+					return response()->json(['status' => "0",
+						'message'=> 'Code has expired',
+						'data' => null, 
+					]);
+				} 
+				else{
+					$user = User::where("userid", $code->userid)->first();
+					if($user){
+						return response()->json(['status' => "1",
+							'message'=> 'User details',
+							'data' => new UserProfileFullResource($user), 
+						]);
+					}
+					else{
+						return response()->json(['status' => "0",
+							'message'=> 'No such user',
+							'data' => null, 
+						]);
+					}
+				}
+				
+
+				
+			}
+			else{
+				return response()->json([
+					"status"=> "0",
+					"message"=> "Invalid api key",
+					"data" => null
+				]);
+			}
+		}
 		
 }

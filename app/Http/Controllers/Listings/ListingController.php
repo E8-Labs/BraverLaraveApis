@@ -24,6 +24,7 @@ use Carbon\Carbon;
 class ListingController extends Controller
 {
 
+	const PercentageEncode = "Bra_Ver_Per_Cent_Encoded_Sign_0192873";
 	function addListing(Request $request){
 		$validator = Validator::make($request->all(), [
 			'yachtname' => 'required',
@@ -67,12 +68,21 @@ class ListingController extends Controller
 		else{
 			$listing->addedby = '';
 		}
-		$listing->yachtname = $request->yachtname;
+		$name = $request->yachtname;
+		$name = str_replace(ListingController::PercentageEncode, "%", $name);
+		$listing->yachtname = $name;
 		
 		$listing->dateadded = Carbon::now()->toDateTimeString();
-		$listing->yachtdescription = $request->yachtdescription;
+		$description = $request->yachtdescription;
+		$description = str_replace(ListingController::PercentageEncode, "%", $description);
+		$listing->yachtdescription = $description;
 		
-		
+		if($request->has('rooms')){
+			$listing->rooms = $request->rooms;
+		}
+		else{
+			$listing->rooms = '';
+		}
 		
 		$listing->type = $request->type;
 
@@ -97,6 +107,21 @@ class ListingController extends Controller
 		else{
 			$listing->yachtweburl = '';
 		}
+
+
+
+		if($request->has('weekly_price')){
+			$listing->weekly_price = $request->weekly_price;
+			if($request->weekly_price == NULL){
+			    $listing->weekly_price = '';
+			}
+		}
+		else{
+			$listing->weekly_price = '';
+		}
+
+
+
 
 		if($request->has('price')){
 			$listing->yachtprice = $request->price;
@@ -230,7 +255,7 @@ class ListingController extends Controller
 			\Log::info($e);
 			\Log::info("-------------------------------Listing Add Exception End---------------------------------");
 		    return response()->json(['status' => false,
-					'message'=> 'Listing  not added',
+					'message'=> 'Listing  not added. '. $e->getMessage(),
 					'error' => $e->getMessage(),
 					'data'=> null,
 
@@ -381,7 +406,7 @@ class ListingController extends Controller
 	}	
 
 
-	private function saveImage($url, $listing_id = -1, $media_title, $media_type){
+	private function saveImage($url, $listing_id, $media_title, $media_type){
 		$listing_image= new ListingImage();
 		// $listing_image->mediaid = uniqid();
 		$listing_image->mediatitle = $media_title;
@@ -417,7 +442,9 @@ class ListingController extends Controller
 					'data' => null, 
 				]);
 			}
-
+    $tokens = array();
+    $search = $request->search;
+    // return $search;
 			$type = "Yacht";
 			if($request->has('type')){
 				$type = $request->type;
@@ -429,74 +456,93 @@ class ListingController extends Controller
 			if($request->has('page')){
 				$page = $request->page;
 			}
-			$off_set = $page * 50 - 50;
-			$users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
-			->when($request->has('lat'), function($query) use($request){
-				$lat = $request->lat;
-				$lang = $request->lang;
-				$query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
-                ->orderBy('distance', 'ASC');
+			$off_set = $page * 20 - 20;
+			$ids = Listing::where('yachtname', 'LIKE', "%$search%")->orWhere('yachtaddress', 'LIKE', "%$search%")->pluck('yachtid');
+// 			return $ids;
+// 			$query = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
+// 			->when($request->has('lat'), function($query) use($request){
+// 				$lat = $request->lat;
+// 				$lang = $request->lang;
+// 				$query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
+//                 ->orderBy('distance', 'ASC');
 
-			})
-			->when($request->has('search'), function($query) use($request){
-				$search = $request->search;
-                if($search != ''){
-                	$tokens = explode(" ", $search);
-                	// return $tokens;
-                    
-					$query->where(function($query) use($tokens){
-						foreach($tokens as $tok){
+// 			})
+// 			->when($request->has('search'), function($query) use($search,  $ids){
+// 				// $search = $request->search;
+// 				$query = $query->whereIn('yachtid', $ids);
+//     //             if($search != ''){
+//     //             	$tokens = explode(" ", $search);
+// 				// 	$query->where(function($query) use($tokens){
+// 				// 		foreach($tokens as $tok){
+// 				// 			$query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
+// 				// 		}
+// 				// 	});
+//     //             }
 
-							$query = $query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
-						}
-					});
-					
+// 			})
+// 			;
+// 			if($request->has('search')){
+// 			    $query = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)->where('yachtname', 'LIKE', "%$search%")
+// 			->when($request->has('lat'), function($query) use($request){
+// 				$lat = $request->lat;
+// 				$lang = $request->lang;
+// 				$query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
+//                 ->orderBy('distance', 'ASC');
 
-                    // $users = $query->take(50)->skip($off_set)->get();
-                }
-
-			})
-			
-			->take(50)->skip($off_set)->get();
-			if(count($users) > 0 ){
-				if($featured){
-					$users->splice(0, 0, [$featured]);
-				}
+// 			});
+// 			}
+// 			if($request->has('search')){
+			 //   return "Search " . $search;
+			 //return $ids;
+// 			    $query = $query->whereIn('yachtid', $ids);
+// 			}
+// 			$users = $query->take(50)->skip($off_set)->get();
+            // $users = array();
+			if($request->has('search') && $search != ""){
+			 //   return response()->json(["message" => "In Search", 'data' => NULL, "status" => "0"]);
+			    try{
+			        $users = Listing::whereIn('yachtid', $ids)->where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
+			        ->when($request->has('lat'), function($query) use($request){
+				        $lat = $request->lat;
+				        $lang = $request->lang;
+				        $query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515     * 1.609344) as distance'))
+                        ->orderBy('distance', 'ASC');
+    
+			        })
+			        ->take(20)->skip($off_set)->get();
+			    }
+			    catch(\Exception $e){
+			        echo $e;
+			    }
 			}
-			// if($request->has('search')){
-			// 	$search = $request->search;
-   //              if($search != ''){
-   //              	$tokens = explode(" ", $search);
-   //              	// return $tokens;
-   //                  $query = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
-   //                  ->when($request->has('lat'), function($query) use($request){
-			// 			$lat = $request->lat;
-			// 			$lang = $request->lang;
-			// 			return $query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
-   //              		->orderBy('distance', 'ASC');
+			else{
+			    $users = Listing::where('deleted', 0)->where('featured', "=", 0)->where('type', $type)
+			    ->when($request->has('lat'), function($query) use($request){
+				    $lat = $request->lat;
+				    $lang = $request->lang;
+				    $query->select(DB::raw('yacht.*, ((ACOS(SIN(' . $lat . ' * PI() / 180) * SIN(yacht.lat * PI() / 180) + COS(' . $lat . ' * PI() / 180) * COS(lat * PI() / 180) * COS((' . $lang . ' - yacht.lang) * PI() / 180)) * 180 / PI()) * 60 * 1.1515 * 1.609344) as distance'))
+                    ->orderBy('distance', 'ASC');
 
-			// 		});
-			// 		$query->where(function($query) use($tokens){
-			// 			foreach($tokens as $tok){
-
-			// 				$query = $query->where('yachtname', 'LIKE', "%$tok%")->orWhere('yachtaddress', 'LIKE', "%$tok%");
-			// 			}
-			// 		});
-					
-
-   //                  $users = $query->take(50)->skip($off_set)->get();
-   //              }
-				
-			// }
-			// else{
-
-			// }
+			    })
+			    ->take(20)->skip($off_set)->get();
+			    if(count($users) > 0 ){
+				    if($featured){
+					    $users->splice(0, 0, [$featured]);
+				    }
+			    }
+			}
+ 			// return $query->toSql();//explode(" ", $search = $request->search);
+			
+			
 
 			
 			if($users){
 				return response()->json(['status' => "1",
 					'message'=> 'Listing obtained',
 					'data' => ListingResource::collection($users), 
+					"search" => $search,
+				// 	'ids' => $ids,
+				// 	"sql" => $query->toSql(),
 				]);
 			}
 			else{
@@ -704,7 +750,7 @@ class ListingController extends Controller
 }
 
 
-
+// $2y$10$oWst/k8n.GyQc8Dn90HvieHSZTDwN./p2UZBBSbB3kig.DmWSagxW
 
 
 

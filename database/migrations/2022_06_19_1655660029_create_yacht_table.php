@@ -12,6 +12,7 @@ class CreateYachtTable extends Migration
 
 		$table->string('yachtid',20);
 		$table->string('yachtname',50);
+		$table->string("rooms", 10);
 		$table->text('yachtdescription');
 		$table->string('yachtprice',50)->nullable()->default('NULL');
 		$table->string('price_full_day',20)->nullable()->default('NULL');
@@ -27,6 +28,7 @@ class CreateYachtTable extends Migration
 		$table->string('instaurl',100);
 		$table->string('eventdate',20);
 		$table->string('eventtime',20);
+
 		$table->string('eventenddate',50)->nullable()->default('NULL');
 		$table->string('eventendtime',50)->nullable()->default('NULL');
 		;

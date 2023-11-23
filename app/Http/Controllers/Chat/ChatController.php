@@ -22,6 +22,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Listing;
+
+
 
 use Carbon\Carbon;
 
@@ -110,6 +114,33 @@ class ChatController extends Controller
 			// 				'data' => new ChatResource($chat), 
 			// 			]);
 			// 		}
+			$yachtid = $request->productid;
+			if($yachtid == null){
+				$yachtid = '';
+			}
+			
+// 			$from = User::where('userid', $request->fromuser)->first();
+			
+// 					try{
+// 					    $yacht = Listing::where('yachtid', $yachtid)->first();
+// 					}
+// 					catch(\Exception $ex){
+// 					    return $ex->getMessage();
+// 					}
+					
+// 					$yachtname = "";
+// 					if($yacht){
+// 						$yachtname = $yacht->yachtname;
+// 					}
+// 					else{
+// 						$yachtname = $request->chatforproduct;
+// 					}
+// 				// 	return "Yacht name " . $yachtname;
+// 					$this->sendReservationEmail($from, $yachtname);
+// 					return response()->json(['status' => "0",
+// 					'message'=> 'Mail sent',
+// 					'data' => null, 
+// 				]);
 
 
 			DB::beginTransaction();
@@ -119,10 +150,7 @@ class ChatController extends Controller
 
 			$user = User::where('userid', $request->fromuser)->first();
 
-			$yachtid = $request->productid;
-			if($yachtid == null){
-				$yachtid = '';
-			}
+			
 
 			$chat = new ChatThread();
 			$chat->chatid = uniqid();
@@ -243,6 +271,17 @@ class ChatController extends Controller
                 	$data["chatid"] = $chat->chatid;
                 	// $this->Push_Notification($token, $data);
 					Notification::add(NotificationTypes::TypeReservation, $request->fromuser, $admin->userid, $res);
+
+					$yacht = Listing::where('yachtid', $yachtid)->first();
+					$yachtname = "";
+					if($yacht){
+						$yachtname = $yacht->yachtname;
+					}
+					else{
+						$yachtname = $request->chatforproduct;
+					}
+					$this->sendReservationEmail($from, $yachtname);
+
 					return response()->json(['status' => "1",
 						'message'=> 'Chat created',
 						'data' => new ChatResource($chat), 
@@ -264,6 +303,20 @@ class ChatController extends Controller
 					'data' => null, 
 				]);
 			}
+	}
+
+	function sendReservationEmail(User $user = null, $yacht_name){
+		
+				// $profile = Profiles::where('user_id', $user->id)->first();
+				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "", "yacht_name" => $yacht_name);
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/ReservationRequestMail', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to("info@braverhospitality.com",'Reservation')->subject('New Reservation Request');
+                        // $message->from("info@braverhospitality.com");
+                    });
+
+				return true;
 	}
 
 	public function getChatById(Request $request){
@@ -333,7 +386,7 @@ class ChatController extends Controller
 			$off_set = $page * $ListSize - $ListSize;
 
 			$chatids = ChatUser::where('userid', $request->userid)->pluck('chatid')->toArray();
-			$chats = ChatThread::whereIn("chatid", $chatids)->skip($off_set)->take($ListSize)->get();
+			$chats = ChatThread::whereIn("chatid", $chatids)->skip($off_set)->take($ListSize)->orderBy('updatedat', 'DESC')->get();
 			if($chats){
 				return response()->json(['status' => "1",
 					'message'=> 'Chats obtained',
@@ -383,13 +436,28 @@ class ChatController extends Controller
             $status = $request->status;
             // return $chatforproduct;
             $chatids = ChatUser::where('userid', $userid)->pluck('chatid')->toArray();
+            // return $chatids;
+            if(count($chatids) === 0){
+                return response()->json(['status' => "0",
+					'message'=> 'No chats',
+					'data' => null, 
+				]);
+            }
 			$chats = ChatThread::whereIn('chatid', $chatids)
 			->when($request->has('chatforproduct'), function($query) use ($chatforproduct){
 			 //   return $chatforproduct;
 				return $query->where('chatforproduct', $chatforproduct);
 			})
 			->when($request->has('chattype'), function($query) use ($chattype){
-				$query->where('chattype', $chattype);
+				
+				if($chattype == "Proper"){
+				    $query->where('chattype', $chattype)->orWhere(function($query) use($chattype){
+				        $query->where('chattype', 'ReservationRequest')->where('chatforproduct', 'Custom');
+				    });
+				}
+				else{
+				    $query->where('chattype', $chattype);
+				}
 			})
 			->when($request->has('status'), function($query) use ($status){
 				// $status = $request->status;
@@ -424,10 +492,49 @@ class ChatController extends Controller
 
 	}
 
+	function uploadChatPdf(Request $request){
+		$validator = Validator::make($request->all(), [
+			"apikey" => 'required',
+// 			"userid" => 'required',
+			"pdf" => 'required',
+
+				]);
+
+			if($validator->fails()){
+				return response()->json(['status' => "0",
+					'message'=> 'validation error',
+					'data' => null, 
+					'validation_errors'=> $validator->errors()]);
+			}
+
+			$key = $request->apikey;
+			if($key != $this->APIKEY){ // get value from constants
+				return response()->json(['status' => "0",
+					'message'=> 'invalid api key',
+					'data' => null, 
+				]);
+			}
+
+
+			if($request->hasFile("pdf")){
+				$data=$request->file('pdf')->store('ChatFiles');
+				return response()->json(['status' => "1",
+					'message'=> 'File uploaded',
+					'data' => "http://braverhospitalityapp.com/braver/storage/app/" . $data, 
+				]);
+			}
+			else{
+				return response()->json(['status' => "0",
+					'message'=> 'No file provided',
+					'data' => null, 
+				]);
+			}
+	}
+
 	function uploadChatImage(Request $request){
 		$validator = Validator::make($request->all(), [
 			"apikey" => 'required',
-			"userid" => 'required',
+// 			"userid" => 'required',
 			"image" => 'required',
 
 				]);
@@ -541,6 +648,7 @@ class ChatController extends Controller
 			if($request->has('lastmessage')){
 				$lastmessage = $request->lastmessage;
 				$chat->lastmessage = $request->lastmessage;
+				$chat->updatedat = Carbon::now()->toDateTimeString();
 				// $not->title = "Notification";
 				// $not = new Notification;
 				// $not->from_user = $fromid;
@@ -621,7 +729,9 @@ class ChatController extends Controller
 					   //         'user' => $u, 
 					   //         'saved' => $saved,
 				    //         ]);
+					    	$team = User::where('userid', $u["userid"])->first();
 					    	$not = Notification::add(NotificationTypes::TeamMemberReservationInvite, $fromid, $u["userid"], $chat, '');
+					    	$this->sendChatInviteEmail($team);
 					    	$chat = ChatThread::where('chatid', $chatid)->first();
 					    	return response()->json(['status' => "1",
 					            'message'=> 'Users added ',
@@ -647,10 +757,10 @@ class ChatController extends Controller
 			}
 			else{
 				// update unread count
-				return response()->json(['status' => "0",
-					'message'=> 'No chat users',
-					'request' => $request->all(), 
-				]);
+				// return response()->json(['status' => "0",
+				// 	'message'=> 'No chat users',
+				// 	'request' => $request->all(), 
+				// ]);
 				if($updateother == "0"){
 
 					ChatUser::where('chatid', $chatid)->where('userid', $fromid)->update(['unreadcount' => 0]);
@@ -680,6 +790,33 @@ class ChatController extends Controller
 				]);
 			}
 
+	}
+
+
+	function sendChatInviteEmail(User $user = null){
+		
+				// $profile = Profiles::where('user_id', $user->id)->first();
+				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to($user->email,'Welcome')->subject('Manage new reservation');
+                        // $message->from("info@braverhospitality.com");
+                    });
+
+				return true;
+	}
+
+	function sendInvite(Request $request){
+		// $user = Auth::user();
+		$user = User::where('userid', $request->userid)->first();
+		$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+        	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+				Mail::send('Mail/TeamMemberToChatMail', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+                        $message->to($user->email,'Welcome')->subject('Manage new reservation');
+                        // $message->from("info@braverhospitality.com");
+                    });
 	}
 
 	function getUnreadNotifications(Request $request){
