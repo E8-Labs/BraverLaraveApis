@@ -499,6 +499,14 @@ class PaymentController extends Controller
 				DB::commit();
 				$chat = ChatThread::where('chatid', $request->chatid)->first();
 				$this->sendNotToAllUsers($user, $chat);
+
+				//Update the invoice in firebase
+				//3 lines below needs to be tested
+				$database = Firebase::database();
+		        $reference = $database->getReference('Chat/' . $request->chatid . "/" . $request->invoice_id);
+                $reference->update(["paid" => true, "payment_status" => "CONFIRMED"]);
+
+
 				return response()->json(['status' => "1",
 					'message'=> "Payment processed & reservation made",
 					'data' => null, 
@@ -1085,9 +1093,9 @@ class PaymentController extends Controller
 				if($event_type === "payment_intent.processing"){
 					//payment New
 					$database = Firebase::database();
-		                $reference = $database->getReference('Chats/' . $intent->chatid . "/" . $intent.invoiceid);
+		                $reference = $database->getReference('Chat/' . $intent->chatid . "/" . $intent->invoiceid);
 		              //  $snapshot = $reference->getSnapshot();
-                        $reference->update(["paid" => false, "payment_status" => "NEW"]);
+                        $reference->update(["paid" => false, "payment_status" => "PENDING"]);
 				}
 				else if($event_type === "payment_intent.succeeded"){
 					// make the reservation here
@@ -1105,15 +1113,39 @@ class PaymentController extends Controller
 
 					//#2 Make Invoice Paid Here
                     	$database = Firebase::database();
-		                $reference = $database->getReference('Chats/' . $intent->chatid . "/" . $intent.invoiceid);
+		                $reference = $database->getReference('Chat/' . $intent->chatid . "/" . $intent->invoiceid);
 		              //  $snapshot = $reference->getSnapshot();
                         $reference->update(["paid" => true, "payment_status" => "CONFIRMED"]);
 		                
+		                $invRef = $database->getReference('Chat/' . $intent->chatid)->push([
+		                    "chatId" => $intent->chatid,
+		                    "date" => Carbon::now()->format("d/m/Y"),
+		                    "invoiceAmount" => "",
+		                    "invoiceId" => $intent->invoiceid,
+		                    "msg" => "Your invoice had been successfully paid",
+		                    "type" => "InvoicePaid",
+		                    "senderId" => $intent->userid,
+		                    "msgId" => "",
+		                    "timestamp" => Carbon::now()->timestamp
+		                    ]);
+		                    
+		                    $key = $invRef->getKey();
+		                    
+		                    $invRef->update(["msgId" => $key]);
+		                    
+		                    //send notification to all users
+		                    $user = User::where('userid', $intent->userid)->first();
+		                    $chat = ChatThread::where('chatid', $intent->chatid)->first();
+				            $this->sendNotToAllUsers($user, $chat);
+		                    
 					
 				}
 				else if($event_type === "payment_intent.payment_failed"){
 					// do not 
 					$payment_status = "FAILED";
+					$database = Firebase::database();
+		            $reference = $database->getReference('Chat/' . $intent->chatid . "/" . $intent->invoiceid);
+                    $reference->update(["paid" => false, "payment_status" => "FAILED"]);
 				}
 				\Log::info("ReservationSaving Intent");
 				$intent->save();

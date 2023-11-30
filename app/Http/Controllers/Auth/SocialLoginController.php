@@ -146,6 +146,7 @@ class SocialLoginController extends Controller
 			DB::commit();
 			$profile = User::where('userid', $user_id)->first();
 			$data = ['profile'=> new UserProfileFullResource($profile)];
+			$profile->createStripeCustomer();
 			return response()->json([
 					'message' => 'User registered',
 					'status' => "1",

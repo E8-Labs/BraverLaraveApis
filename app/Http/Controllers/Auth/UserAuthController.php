@@ -246,17 +246,18 @@ class UserAuthController extends Controller
 			//send push
 			$profile = User::where('userid', $user_id)->first();
 			$user = $profile;
-			$candidate_id = $this->createCandidate($profile);
+			// $candidate_id = $this->createCandidate($profile);
 			// echo "cand id " . $candidate_id;
 			$invitation = null;
-			if($candidate_id){
-				User::where('userid', $user_id)->update(['chekrcandidateid' => $candidate_id]);
-				// echo "Send invitation";
-				$invitation = ReportController::sendInvitation($candidate_id);
-				// echo "Invitation sent response";
-				 // return  ["invitation" => $invitation];
-			}
+			// if($candidate_id){
+			// 	User::where('userid', $user_id)->update(['chekrcandidateid' => $candidate_id]);
+			// 	// echo "Send invitation";
+			// 	$invitation = ReportController::sendInvitation($candidate_id);
+			// 	// echo "Invitation sent response";
+			// 	 // return  ["invitation" => $invitation];
+			// }
 			$this->sendWelcomeEmail($user);
+			$user->createStripeCustomer();
 			   return response()->json([
 			   		'message' => 'User registered',
 			   		'status' => "1",
@@ -519,6 +520,22 @@ class UserAuthController extends Controller
                         
 			        	
         
+		  $stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+			if($user->stripecustomerid == NULL || $user->stripecustomerid == ''){
+				//Generate Stripe id	
+				\Log::info("User doesn't have stripecustomerid");
+				
+            	$customer = $stripe->customers->create([
+            		'description' => 'Braver Customer',
+            		'email' => $user->email,
+            		'name' => $user->name,
+            
+             	]);
+				 \Log::info($customer);
+            	$stripeid= $customer['id'];
+            	$user->stripecustomerid = $stripeid;
+            	$user->save();
+			}
         
 			        	return response()->json([
 			        			'message' => 'User logged in',
@@ -925,6 +942,25 @@ class UserAuthController extends Controller
 				else{
 					$user = User::where("userid", $code->userid)->first();
 					if($user){
+
+						$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
+						if($user->stripecustomerid == NULL || $user->stripecustomerid == ''){
+							//Generate Stripe id	
+							\Log::info("User doesn't have stripecustomerid in check webaccess code");
+
+            				$customer = $stripe->customers->create([
+            					'description' => 'Braver Customer',
+            					'email' => $user->email,
+            					'name' => $user->name,
+							
+            			 	]);
+							 \Log::info($customer);
+            				$stripeid= $customer['id'];
+            				$user->stripecustomerid = $stripeid;
+            				$user->save();
+						}
+
+
 						return response()->json(['status' => "1",
 							'message'=> 'User details',
 							'data' => new UserProfileFullResource($user), 

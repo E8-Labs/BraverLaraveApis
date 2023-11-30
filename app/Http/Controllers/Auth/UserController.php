@@ -164,7 +164,7 @@ class UserController extends Controller
 			    $saved = $user->save();
 				if($saved){
 					$admin = User::where('role', 'ADMIN')->first();
-					Notification::add(NotificationTypes::AccountApproved, $user->id, $admin->userid, $user);
+					Notification::add(NotificationTypes::AccountApproved, $user->userid, $admin->userid, $user);
 					return response()->json(['status' => "1",
 						'message'=> 'User approved',
 						'data' => new UserProfileFullResource($user), 
