@@ -73,13 +73,15 @@ class DemoCron extends Command
             else{
                 // \Log::info("Bday is " . $bday);
                 $date = Carbon::now()->addWeeks(2)->format('m/d');
+                $dateToday = Carbon::now()->format('m/d');
                 $year = Carbon::now()->addWeeks(2)->format('Y');
                 \Log::info("Bday is " . $bday . " Added Two Weeks " . $date);
                 if(strpos($bday, $date) === 0){
-                \Log::info("Bday is inside 1");
+                \Log::info("Bday is inside 1".$user->name);
                     $alreadyWished = BDayWish::where('userid', $user->userid)->where('year', $year)->first();
                     if(!$alreadyWished){
                         //send email
+                        \Log::info("Already wished".$user->name);
                          \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
                         $data = array('time' => 'in two weeks', 'user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
                         // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
@@ -87,7 +89,8 @@ class DemoCron extends Command
                             //send to $user->email
                             //"salmanmajid14@gmail.com"
                             //$user->email
-                            $message->to("info@braverhospitality.com"/*$user->email*/,'Birthday')->subject('Birthday');
+                            $message->to(["info@braverhospitality.com", "Jonathan@braverhospitality.com", "salman@e8-labs.com"]/*$user->email*/,'Birthday')->subject('Birthday');
+                            var_dump( Mail:: failures());
                             // $message->from("info@braverhospitality.com");
                         });
                          $bd = new BDayWish;
@@ -98,10 +101,11 @@ class DemoCron extends Command
                     }
                     else{
                        if($alreadyWished.notice_type === "2week"){
+                        \Log::info("Already sent 2 week notice".$user->name);
                             //send bday notification
-                            \Log::info("Checking if to send the bday notification");
+                            \Log::info("Checking if to send the bday notification".$user->name);
                             if(strpos($bday, $currentDate) === 0){
-                                \Log::info("Should send notification on actual bday");
+                                \Log::info("Should send notification on actual bday".$user->name);
                                 $alreadyWished->notice_type = "bday";
                                 $alreadyWished->save();
                                 $data = array('time' => 'today', 'user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
@@ -110,7 +114,7 @@ class DemoCron extends Command
                                     //send to $user->email
                                     //"salmanmajid14@gmail.com"
                                     //$user->email
-                                    $message->to("info@braverhospitality.com"/*$user->email*/,'Birthday')->subject('Birthday');
+                                    $message->to(["info@braverhospitality.com", "Jonathan@braverhospitality.com", "salman@e8-labs.com"]/*$user->email*/,'Birthday')->subject('Birthday');
                                 });
                             }
                             else{
@@ -121,6 +125,35 @@ class DemoCron extends Command
                         \Log::info("Bday already wished");
                        }
 
+                    }
+                    
+                }
+                else{
+                    \Log::info("Strpos not matched".$user->name . " bday " . $bday . " curr " . $date);
+                    \Log::info("Strpos matching ".$user->name . " bday " . $bday . " curr " . $dateToday);
+                    
+                    if(strpos($bday, $dateToday) === 0){
+                        \Log::info("Should send notification on actual bday".$user->name);
+                        $alreadyWished = BDayWish::where('userid', $user->userid)->where('year', $year)->where("notice_type", "bday")->first();
+                        if($alreadyWished){
+                            \Log::info("Email already sent for bday" . $user->name);
+                        }
+                        else{
+                            $bd = new BDayWish;
+                         $bd->userid = $user->userid;
+                         $bd->year = $year;
+                                $bd->notice_type = "bday";
+                                $bd->save();
+                                $data = array('time' => 'today', 'user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
+                                // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+                                Mail::send('Mail/bdayemail', $data, function ($message) use ($data, $user) {
+                                    //send to $user->email
+                                    //"salmanmajid14@gmail.com"
+                                    //$user->email
+                                    $message->to(["info@braverhospitality.com", "Jonathan@braverhospitality.com", "salman@e8-labs.com"]/*$user->email*/,'Birthday')->subject('Birthday');
+                                });
+                        }
+                        
                     }
                     
                 }

@@ -235,7 +235,7 @@ class ChatController extends Controller
 				}
 
 				if($request->has('reservationdescription')){
-					$res->reservationendtime = $request->reservationdescription;
+					$res->reservationdescription = $request->reservationdescription;
 				}
 				else{
 					$res->reservationdescription = '';
@@ -256,7 +256,19 @@ class ChatController extends Controller
 					$res->days = NULL;
 				}
 
+				if($request->has('rooms')){
+					$res->rooms = $request->rooms;
+				}
+				else{
+					$res->rooms = NULL;
+				}
 				
+				if($request->has('budget')){
+					$res->budget = $request->budget;
+				}
+				else{
+					$res->budget = NULL;
+				}
 
 
 				if($res->save()){

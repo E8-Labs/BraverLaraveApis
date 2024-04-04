@@ -694,7 +694,7 @@ class PaymentController extends Controller
   					'customer' => $user->stripecustomerid,
   		// 			"promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
   					"trial_from_plan" => true, // change it to true to avail trial
-  					// "trial_period_days" => 90,
+  					"trial_period_days" => 7,
   					'items' => [
     					['price' => $plan],
   					],
@@ -704,7 +704,7 @@ class PaymentController extends Controller
 				            'customer' => $user->stripecustomerid,
 				            // "promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
   					        "trial_from_plan" => true, // change it to true to avail trial
-  					        // "trial_period_days" => 90,
+  					        "trial_period_days" => 7,
   					        'items' => [
     					         ['price' => $plan],
   					        ],
