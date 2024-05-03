@@ -257,6 +257,7 @@ class UserAuthController extends Controller
 			// 	 // return  ["invitation" => $invitation];
 			// }
 			$this->sendWelcomeEmail($user);
+			$this->sendNewUserEmailToAdmin($user);
 			$user->createStripeCustomer();
 			   return response()->json([
 			   		'message' => 'User registered',
@@ -867,6 +868,20 @@ class UserAuthController extends Controller
 
 				return true;
 		}
+
+		function sendNewUserEmailToAdmin(User $user = null){
+		
+			// $profile = Profiles::where('user_id', $user->id)->first();
+			$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "");
+		// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
+			Mail::send('Mail/NewUser', $data, function ($message) use ($data, $user) {
+				//send to $user->email
+					$message->to(["info@braverhospitality.com", "Jonathan@braverhospitality.com", "salman@e8-labs.com"], 'New User')->subject('New User');
+					// $message->from("info@braverhospitality.com");
+				});
+
+			return true;
+	}
 
 
 		//subscription authentication related logic

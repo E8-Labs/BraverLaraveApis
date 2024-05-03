@@ -68,21 +68,21 @@ class DemoCron extends Command
         foreach($users as $user){
             $bday = $user->dob;
             if($bday === NULL || $bday === ""){
-                \Log::info("Bday is not added");
+                // \Log::info("Bday is not added");
             }
             else{
                 // \Log::info("Bday is " . $bday);
                 $date = Carbon::now()->addWeeks(2)->format('m/d');
                 $dateToday = Carbon::now()->format('m/d');
                 $year = Carbon::now()->addWeeks(2)->format('Y');
-                \Log::info("Bday is " . $bday . " Added Two Weeks " . $date);
+                // \Log::info("Bday is " . $bday . " Added Two Weeks " . $date);
                 if(strpos($bday, $date) === 0){
-                \Log::info("Bday is inside 1".$user->name);
+                // \Log::info("Bday is inside 1".$user->name);
                     $alreadyWished = BDayWish::where('userid', $user->userid)->where('year', $year)->first();
                     if(!$alreadyWished){
                         //send email
-                        \Log::info("Already wished".$user->name);
-                         \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
+                        // \Log::info("Already wished".$user->name);
+                        //  \Log::info("Email should be sent for BDay " . $bday . " 2 weeks after " . $date);
                         $data = array('time' => 'in two weeks', 'user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
                         // $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
                          Mail::send('Mail/bdayemail', $data, function ($message) use ($data, $user) {
@@ -90,7 +90,7 @@ class DemoCron extends Command
                             //"salmanmajid14@gmail.com"
                             //$user->email
                             $message->to(["info@braverhospitality.com", "Jonathan@braverhospitality.com", "salman@e8-labs.com"]/*$user->email*/,'Birthday')->subject('Birthday');
-                            var_dump( Mail:: failures());
+                            // var_dump( Mail:: failures());
                             // $message->from("info@braverhospitality.com");
                         });
                          $bd = new BDayWish;
@@ -100,12 +100,12 @@ class DemoCron extends Command
                          $bd->save();
                     }
                     else{
-                       if($alreadyWished.notice_type === "2week"){
-                        \Log::info("Already sent 2 week notice".$user->name);
+                       if($alreadyWished->notice_type === "2week"){
+                        // \Log::info("Already sent 2 week notice".$user->name);
                             //send bday notification
-                            \Log::info("Checking if to send the bday notification".$user->name);
+                            // \Log::info("Checking if to send the bday notification".$user->name);
                             if(strpos($bday, $currentDate) === 0){
-                                \Log::info("Should send notification on actual bday".$user->name);
+                                // \Log::info("Should send notification on actual bday".$user->name);
                                 $alreadyWished->notice_type = "bday";
                                 $alreadyWished->save();
                                 $data = array('time' => 'today', 'user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
@@ -122,21 +122,21 @@ class DemoCron extends Command
                             }
                        }
                        else{
-                        \Log::info("Bday already wished");
+                        // \Log::info("Bday already wished");
                        }
 
                     }
                     
                 }
                 else{
-                    \Log::info("Strpos not matched".$user->name . " bday " . $bday . " curr " . $date);
-                    \Log::info("Strpos matching ".$user->name . " bday " . $bday . " curr " . $dateToday);
+                    // \Log::info("Strpos not matched".$user->name . " bday " . $bday . " curr " . $date);
+                    // \Log::info("Strpos matching ".$user->name . " bday " . $bday . " curr " . $dateToday);
                     
                     if(strpos($bday, $dateToday) === 0){
-                        \Log::info("Should send notification on actual bday".$user->name);
+                        // \Log::info("Should send notification on actual bday".$user->name);
                         $alreadyWished = BDayWish::where('userid', $user->userid)->where('year', $year)->where("notice_type", "bday")->first();
                         if($alreadyWished){
-                            \Log::info("Email already sent for bday" . $user->name);
+                            // \Log::info("Email already sent for bday" . $user->name);
                         }
                         else{
                             $bd = new BDayWish;
@@ -175,11 +175,11 @@ class DemoCron extends Command
 
                 $user->accountstatus = AccountStatus::Approved;
                 $user->save();
-                \Log::info("Cron: User already created report and status is clear". $user->userid);
+                // \Log::info("Cron: User already created report and status is clear". $user->userid);
                 // return $user;
             }
             else{
-                \Log::info("Cron: User already created report and status is not clear". $user->userid);
+                // \Log::info("Cron: User already created report and status is not clear". $user->userid);
                 $cont = new Controller();
                 $report = $cont->getchekrreportFromServer($user);
                 // return response()->json(['status' => "1",
@@ -196,7 +196,7 @@ class DemoCron extends Command
             $report_error = null;
             // return $report;
             if(!isset($report->error)){
-                \Log::info("Cron: User created newly " . $user->userid);
+                // \Log::info("Cron: User created newly " . $user->userid);
                 $id = $report->id;
                 User::where('userid', $user->userid)->update(['chekrreportid' => $id]);
                 $user = User::where('userid', $user->userid)->first();
@@ -207,7 +207,7 @@ class DemoCron extends Command
             }
             else{
                 $report_error = $report->error . " " . $user->userid;
-                \Log::info("Cron: ". $report_error);
+                // \Log::info("Cron: ". $report_error);
                 // return response()->json(['status' => "0",
                 //     'message'=> $report_error,
                 //     'data' => null, 
