@@ -567,60 +567,74 @@ class PaymentController extends Controller
 
 
 
-	function upgradeSubscription(Request $request){
-		$userid = $request->userid;
-		$plan = $request->plan; // subscribe to new plan
-		$user = User::where('userid', $userid)->first();
-		$plans = $this->getUserActiveSubscriptions($user->stripecustomerid);
-		if($plans === NULL || count($plans) === 0){
-			//if no previous subscription, then just subscribe
-			return $this->createSubscription($request);
-		}
-		else{
-			$sub = $plans[0];
-			$isTrial = $this->checkIfTrial($sub);
-			if($isTrial){
-				return response()->json(['status' => "1",
-								'message'=> "Please wait for the trial to expire",
-								'data' => NULL, 
-				]);
-			}
-			// return "One active subscription";
 
-			//active subscription. We assume and will enforce only one active or trialing subscription for a user
-			
+function upgradeSubscription(Request $request){
+    $userid = $request->userid;
+    $plan = $request->plan; // subscribe to new plan
+    $user = User::where('userid', $userid)->first();
+    $plans = $this->getUserActiveSubscriptions($user->stripecustomerid);
+    if($plans === NULL || count($plans) === 0){
+        //if no previous subscription, then just subscribe
+        return $this->createSubscription($request);
+    }
+    else{
+        $sub = $plans[0];
+        $isTrial = $this->checkIfTrial($sub);
+        if($isTrial){
+            return response()->json([
+                'status' => "1",
+                'message'=> "Please wait for the trial to expire",
+                'data' => NULL,
+            ]);
+        }
 
-			$id = $sub->id;
-			//check if the user already has yearly subscription, then 
+        $id = $sub->id;
+        $subItem = $sub->items->data[0];
+        $subItemId = $subItem->id;
 
-			$subItem = $sub->items->data[0];
-			$subItemId = $subItem->id;
-			$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
-			$updated = $stripe->subscriptions->update(
-				$id,
-				["items" =>[["id" => $subItemId, "price" => $plan]]]
-			);
+        $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
 
-			if($updated){
-				//if susccessfull then update the database as well
-				return response()->json(['status' => "1",
-								'message'=> "Plan upgraded",
-								'data' => $updated, 
-				]);
-			}
-			else{
-				return response()->json(['status' => "0",
-								'message'=> "Error upgrading the plan",
-								'data' => $updated, 
-				]);
-			}
+        // Step 1: Remove discount if any before upgrading
+        try {
+            $stripe->subscriptions->deleteDiscount($id);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => "0",
+                'message'=> "Failed to remove discount: " . $e->getMessage(),
+                'data' => NULL,
+            ]);
+        }
 
+        // Step 2: Update the subscription
+        try {
+            $updated = $stripe->subscriptions->update(
+                $id,
+                ["items" => [["id" => $subItemId, "price" => $plan]]]
+            );
 
-		}
-		
+            if($updated){
+                return response()->json([
+                    'status' => "1",
+                    'message'=> "Plan upgraded",
+                    'data' => $updated,
+                ]);
+            } else {
+                return response()->json([
+                    'status' => "0",
+                    'message'=> "Error upgrading the plan",
+                    'data' => NULL,
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => "0",
+                'message'=> "Error during upgrade: " . $e->getMessage(),
+                'data' => NULL,
+            ]);
+        }
+    }
+}
 
-
-	}
 
 	 function checkIfTrial($plan){
 	 	// foreach($plans as $plan){
@@ -694,7 +708,7 @@ class PaymentController extends Controller
   					'customer' => $user->stripecustomerid,
   		// 			"promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
   					"trial_from_plan" => true, // change it to true to avail trial
-  					"trial_period_days" => 7,
+  					// "trial_period_days" => 7,
   					'items' => [
     					['price' => $plan],
   					],
@@ -704,7 +718,7 @@ class PaymentController extends Controller
 				            'customer' => $user->stripecustomerid,
 				            // "promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
   					        "trial_from_plan" => true, // change it to true to avail trial
-  					        "trial_period_days" => 7,
+  					        // "trial_period_days" => 7,
   					        'items' => [
     					         ['price' => $plan],
   					        ],
