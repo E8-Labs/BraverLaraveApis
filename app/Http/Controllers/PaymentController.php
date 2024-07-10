@@ -402,7 +402,10 @@ class PaymentController extends Controller
 
 				]);
 
-
+				\Log::info("############################Reservation Request Start################################");
+				\Log::info("Creating reservation ");
+				\Log::info($request->all());
+				\Log::info("############################Reservation Request End #################################");
 			if($validator->fails()){
 				return response()->json(['status' => "0",
 					'message'=> 'validation error',
@@ -634,6 +637,8 @@ function upgradeSubscription(Request $request){
         }
     }
 }
+
+
 
 
 	 function checkIfTrial($plan){

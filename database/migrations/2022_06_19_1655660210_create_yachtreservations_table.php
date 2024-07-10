@@ -22,6 +22,7 @@ class CreateYachtreservationsTable extends Migration
 			$table->string('amountpaid',30);
 			$table->string('chatid',50);
 			$table->string('paymentmethod',100);
+			$table->string('customaddress',400);
 			$table->string('refundid',100);
 			$table->timestamp('refunddate')->nullable()->default('NULL');
 			$table->string('cancelledby',100);

@@ -105,53 +105,16 @@ class ChatController extends Controller
 				]);
 			}
 
-			// $chat = ChatThread::where('chatforproduct', $request->chatforproduct)
-			// 		->where('fromuserid', $request->fromuser)
-			// 		->where('chattype', $request->chattype)->first();
-			// 		if($chat){// && ($chat->reservationstatus != ReservationStatus::StatusReserved)
-			// 			return response()->json(['status' => "1",
-			// 				'message'=> 'Chat already exists',
-			// 				'data' => new ChatResource($chat), 
-			// 			]);
-			// 		}
 			$yachtid = $request->productid;
 			if($yachtid == null){
 				$yachtid = '';
 			}
-			
-// 			$from = User::where('userid', $request->fromuser)->first();
-			
-// 					try{
-// 					    $yacht = Listing::where('yachtid', $yachtid)->first();
-// 					}
-// 					catch(\Exception $ex){
-// 					    return $ex->getMessage();
-// 					}
-					
-// 					$yachtname = "";
-// 					if($yacht){
-// 						$yachtname = $yacht->yachtname;
-// 					}
-// 					else{
-// 						$yachtname = $request->chatforproduct;
-// 					}
-// 				// 	return "Yacht name " . $yachtname;
-// 					$this->sendReservationEmail($from, $yachtname);
-// 					return response()->json(['status' => "0",
-// 					'message'=> 'Mail sent',
-// 					'data' => null, 
-// 				]);
-
 
 			DB::beginTransaction();
-
-
-
 
 			$user = User::where('userid', $request->fromuser)->first();
 
 			
-
 			$chat = new ChatThread();
 			$chat->chatid = uniqid();
 			// $chat->reservationid = uniqid();
@@ -191,6 +154,12 @@ class ChatController extends Controller
 				}
 
 				$res = new Reservation();
+				if($request->has('customaddress')){
+					$res->customaddress = $request->customaddress;
+				}
+				else{
+					$res->customaddress = '';
+				}
 				$res->agenthandler = '';
 				$res->transactionid = '';
 				$res->amountpaid = '';
@@ -320,7 +289,7 @@ class ChatController extends Controller
 	function sendReservationEmail(User $user = null, $yacht_name){
 		
 				// $profile = Profiles::where('user_id', $user->id)->first();
-				$data = array('user_name'=> $user->name, "user_email" => "info@braverhospitality.com", "user_message" => "", "yacht_name" => $yacht_name);
+				$data = array('user_name'=> $user->name, "user_email" => "jonathan@braverhospitality.com", "user_message" => "", "yacht_name" => $yacht_name);
         	// $data = array('user_name'=> "Hammad", "user_email" => "admin@braverhospitality.com", "user_message" => "");
 				Mail::send('Mail/ReservationRequestMail', $data, function ($message) use ($data, $user) {
 					//send to $user->email
