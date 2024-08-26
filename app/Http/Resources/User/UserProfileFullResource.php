@@ -27,7 +27,7 @@ class UserProfileFullResource extends JsonResource
         $haveActiveSubs = $paymentController->getUserActiveSubscriptions($this->stripecustomerid);
 
         $plans = $haveActiveSubs;
-
+    $sub = null;
 
         $mySubscription = ["status" => "inactive", "plan" => ""]; // Monthly & Yearly
         if($plans === NULL || count($plans) === 0){
@@ -47,21 +47,34 @@ class UserProfileFullResource extends JsonResource
             // else if($price === env("Test_Monthly_Plan_Id")){
             //     $type = "Monthly";
             // }
-
-            if($price === env("Live_Yearly_Plan_Id")){
-                $type = "Yearly";
+            $interval = "";
+            $amount = 1000;
+            if($sub){
+                $interval = $sub->plan->interval . "ly";
+                $amount = $sub->plan->amount / 100;
             }
-            else if($price === env("Live_Monthly_Plan_Id")){
-                $type = "Monthly";
+            
+            if($price === "price_1PqqchC2y2Wr4BecnrBic37s"){
+                $type = "Monthly Private";
+                
+            }
+            else if($price === "price_1PqqerC2y2Wr4BecRTvEsD1u"){
+                $type = "Monthly Executive";
+            }
+            else if($price === "price_1PqqiXC2y2Wr4BecgL2a3LmO"){
+                $type = "Yearly Private";
+            }
+            else if($price === "price_1Pqqj4C2y2Wr4BecXvK55VpD"){
+                $type = "Yearlt Executive";
             }
             if($isTrial){
-                $mySubscription = ["status" => "trialing", "plan" => $type];
+                $mySubscription = ["status" => "trialing", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval];
             }
             else if ($sub->status === "active"){
-                $mySubscription = ["status" => "active", "plan" => $type];
+                $mySubscription = ["status" => "active", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval];
             }
             else{
-                $mySubscription = ["status" => "inactive", "plan" => $type];
+                $mySubscription = ["status" => "inactive", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval];
             }
         }
 
@@ -89,7 +102,8 @@ class UserProfileFullResource extends JsonResource
             'city' => $this->city,
             'state' => $this->state,
             "is_premium" => $isPremium,
-            "plan" => $mySubscription
+            "plan" => $mySubscription,
+            "sub" => $sub
         ];
     }
 }

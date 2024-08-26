@@ -402,10 +402,7 @@ class PaymentController extends Controller
 
 				]);
 
-				\Log::info("############################Reservation Request Start################################");
-				\Log::info("Creating reservation ");
-				\Log::info($request->all());
-				\Log::info("############################Reservation Request End #################################");
+
 			if($validator->fails()){
 				return response()->json(['status' => "0",
 					'message'=> 'validation error',
@@ -545,6 +542,7 @@ class PaymentController extends Controller
                 // return $haveActiveSubs;
         }
         catch(\Exception $e){
+            \Log::info($e);
             \Log::info("No active subs");
         }
         if($haveActiveSubs === NULL || count($haveActiveSubs->data) === 0){
@@ -639,8 +637,6 @@ function upgradeSubscription(Request $request){
 }
 
 
-
-
 	 function checkIfTrial($plan){
 	 	// foreach($plans as $plan){
 	 		if($plan->status === "trialing"){
@@ -732,7 +728,9 @@ function upgradeSubscription(Request $request){
 				    if($code !== null){
 				        $params["promotion_code"] = $code;
 				    }
+				    // \Log::info("Creating subscription ", $params);
 					$sub = $stripe->subscriptions->create($params);
+				// 	\Log::info("Created subscription ", $sub);
 					if($sub->id === NULL){
 					// failed to create charge
 						return response()->json(['status' => "0",
@@ -778,6 +776,42 @@ function upgradeSubscription(Request $request){
 	}
 
 
+
+public function validateCoupon(Request $request)
+    {
+        // Validate the incoming request
+        $request->validate([
+            'coupon_code' => 'required|string',
+        ]);
+
+        // Get the environment (Sandbox or Production)
+        $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+
+        try {
+            // Retrieve the coupon from Stripe using the provided code
+            $coupon = $stripe->coupons->retrieve($request->input('coupon_code'));
+
+            // Check if the coupon is valid (not expired or applied)
+            if ($coupon && !$coupon->valid) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Coupon is not valid.',
+                ]);
+            }
+
+            return response()->json([
+                'status' => "1",
+                'message' => 'Coupon is valid.',
+                'coupon' => $coupon,
+            ]);
+        } catch (\Exception $e) {
+            // Handle error if the coupon is not found or any other issue occurs
+            return response()->json([
+                'status' => "0",
+                'message' => 'Error retrieving coupon: ' . $e->getMessage(),
+            ]);
+        }
+    }
 	
 
 	function cancelSubscription(Request $request){
@@ -808,7 +842,7 @@ function upgradeSubscription(Request $request){
 				if($oldSub){
 				    $haveSubAlready = $stripe->subscriptions->retrieve($oldSub->sub_id, []);
 				}
-				else if ($haveSubAlready){
+				else if ($haveActiveSubs){
 				    $haveSubAlready = $haveActiveSubs[0];
 				}
 				if($haveSubAlready->status === "active" || $haveSubAlready->status === "trialing"){
@@ -821,6 +855,7 @@ function upgradeSubscription(Request $request){
 					return response()->json(['status' => "1",
 						'message'=> "Subscription cancelled",
 						'data' => $cancelled, 
+						
 					]);
 				}
 			}
@@ -828,6 +863,9 @@ function upgradeSubscription(Request $request){
 				return response()->json(['status' => "0",
 					'message'=> $e->getMessage(),
 					'data' => null, 
+					"old" => $oldSub,
+						"already" => $haveSubAlready,
+						"active" => $haveActiveSubs
 				]);
 			}
 		}

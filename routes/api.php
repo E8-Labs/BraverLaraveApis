@@ -67,6 +67,7 @@ Route::post("create_subscription", [PaymentController::class, "createSubscriptio
 Route::post("upgrade_subscription", [PaymentController::class, "upgradeSubscription"]);
 Route::post("cancel_subscription", [PaymentController::class, "cancelSubscription"]);
 Route::post("create_payment_intent", [PaymentController::class, "createPaymentIntent"]);
+Route::post("validate_coupon", [PaymentController::class, "validateCoupon"]);
 
 Route::post("send_st_webhook", [PaymentController::class, "stripeWebhook"]);
 
