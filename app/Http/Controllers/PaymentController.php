@@ -17,7 +17,7 @@ use App\Models\Auth\UserType;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Mail;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
 use App\Models\PaymentIntent;
@@ -726,7 +726,11 @@ function upgradeSubscription(Request $request){
   					     ];
 				    }
 				    if($code !== null){
-				        $params["promotion_code"] = $code;
+				        \Log::info("Promo Code is ". $code);
+				        // $params["promotion_code"] = $code; // old logic
+				        $params["discounts"] = [
+				            [ "coupon" =>  $code ]
+				        ];
 				    }
 				    // \Log::info("Creating subscription ", $params);
 					$sub = $stripe->subscriptions->create($params);
@@ -783,6 +787,7 @@ public function validateCoupon(Request $request)
         $request->validate([
             'coupon_code' => 'required|string',
         ]);
+        //  dd($request->all());
 
         // Get the environment (Sandbox or Production)
         $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
@@ -1102,8 +1107,8 @@ public function validateCoupon(Request $request)
 		$event_id = $payload["id"];
 		$event_type = $payload["type"]; // customer.subscription.updated etc
 		\Log::info("Event is " . $event_type);
-// 		\Log::info("Event Data");
-// 		\Log::info($payload);
+		\Log::info("Event Data");
+		\Log::info($payload);
 		
 		
 		if($event_type === "customer.subscription.updated" || $event_type === "customer.subscription.deleted"){
@@ -1129,6 +1134,18 @@ public function validateCoupon(Request $request)
 			    $dbSub->plan = $plan_id;
 			    $dbSub->price = $amount;
 			    $dbSub->save();
+			}
+			if($status == "canceled"){
+				\Log::info("Subscription cancelled Sending email");
+				$user = User::where("userid", $dbSub->userid)->first();
+				$data = array( 'user_name'=> $user->name, "user_email" => $user->email, "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
+				//send email to the user about subscription cancellation
+				Mail::send('Mail/subscriptioncancel', $data, function ($message) use ($data, $user) {
+					//send to $user->email
+					//"salmanmajid14@gmail.com"
+					//$user->email
+					$message->to([$user->email, "salman@e8-labs.com"]/*$user->email*/,'Subscription Cancelled')->subject('Subscription Cancelled');
+				});
 			}
 		}
 		else if($event_type === "payment_intent.processing" || $event_type === "payment_intent.succeeded" || $event_type === "payment_intent.payment_failed"){

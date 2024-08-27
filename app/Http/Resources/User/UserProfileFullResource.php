@@ -49,9 +49,17 @@ class UserProfileFullResource extends JsonResource
             // }
             $interval = "";
             $amount = 1000;
+            $netTotal = $amount;
+
+            $discount = $sub->discount;
             if($sub){
                 $interval = $sub->plan->interval . "ly";
                 $amount = $sub->plan->amount / 100;
+                $off = $discount->coupon->amount_off;
+                if($off == null){
+                    $off = ($amount / 100) * $discount->coupon->percent_off;
+                }
+                $netTotal = $amount - $off;
             }
             
             if($price === "price_1PqqchC2y2Wr4BecnrBic37s"){
@@ -67,14 +75,21 @@ class UserProfileFullResource extends JsonResource
             else if($price === "price_1Pqqj4C2y2Wr4BecXvK55VpD"){
                 $type = "Yearlt Executive";
             }
+            
+            
             if($isTrial){
-                $mySubscription = ["status" => "trialing", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval];
+                $mySubscription = ["status" => "trialing", "plan" => $type, "price_id"=> $price, 
+                "amount" => $amount, "interval"=> $interval,"coupon_name"=> $discount->coupon->name, "coupon_id"=> $discount->coupon->id, "percent_off"=> $discount->coupon->percent_off,
+            "amount_off"=> $discount->coupon->amount_off, "duration"=> $discount->coupon->duration, "duration_in_months"=> $discount->coupon->duration_in_months, "net_amount" => $netTotal
+        ];
             }
             else if ($sub->status === "active"){
-                $mySubscription = ["status" => "active", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval];
+                $mySubscription = ["status" => "active", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval, "coupon_name"=> $discount->coupon->name, "coupon_id"=> $discount->coupon->id, "percent_off"=> $discount->coupon->percent_off,
+                "amount_off"=> $discount->coupon->amount_off, "duration"=> $discount->coupon->duration, "duration_in_months"=> $discount->coupon->duration_in_months, "net_amount" => $netTotal];
             }
             else{
-                $mySubscription = ["status" => "inactive", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval];
+                $mySubscription = ["status" => "inactive", "plan" => $type, "price_id"=> $price, "amount" => $amount, "interval"=> $interval, "coupon_name"=> $discount->coupon->name, "coupon_id"=> $discount->coupon->id, "percent_off"=> $discount->coupon->percent_off,
+                "amount_off"=> $discount->coupon->amount_off, "duration"=> $discount->coupon->duration, "duration_in_months"=> $discount->coupon->duration_in_months, "net_amount" => $netTotal];
             }
         }
 
