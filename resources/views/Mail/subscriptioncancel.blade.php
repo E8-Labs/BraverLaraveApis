@@ -56,21 +56,6 @@
             margin: 30px 0;
         }
 
-        .button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #0056b3;
-        }
-
         .footer {
             text-align: center;
             font-size: 12px;
@@ -102,11 +87,11 @@
             <p class="message">We wanted to let you know that your subscription plan has expired or been canceled. We hope you've enjoyed our services so far, and we'd love to continue serving you.</p>
             <p class="message">Please log in to the app and subscribe to a plan to continue enjoying our services.</p>
 
-            <div class="button-container">
-                <a href="https://main.d5iqt2n70gsih.amplifyapp.com/" class="button">Renew Subscription</a>
-            </div>
-
             <p class="message">If you have any questions or need assistance, feel free to contact our support team.</p>
+
+            <div class="button-container">
+                <a href="https://main.d5iqt2n70gsih.amplifyapp.com/" class="button" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Renew Subscription</a>
+            </div>
         </div>
 
         <div class="footer">

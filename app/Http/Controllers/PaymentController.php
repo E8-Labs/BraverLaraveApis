@@ -855,7 +855,7 @@ public function validateCoupon(Request $request)
 					// $stripe = new \Stripe\StripeClient('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
 					$cancelled = $stripe->subscriptions->cancel($haveSubAlready->id, []);
 					if($cancelled){
-					    $oldSub->delete();
+					    // $oldSub->delete();
 					}
 					return response()->json(['status' => "1",
 						'message'=> "Subscription cancelled",
@@ -1136,6 +1136,7 @@ public function validateCoupon(Request $request)
 			    $dbSub->save();
 			}
 			if($status == "canceled"){
+			    $dbSub->delete();
 				\Log::info("Subscription cancelled Sending email");
 				$user = User::where("userid", $dbSub->userid)->first();
 				$data = array( 'user_name'=> $user->name, "user_email" => $user->email, "phone"=> $user->phone, "city"=> $user->city, "state"=> $user->state, "user_message" => "");
