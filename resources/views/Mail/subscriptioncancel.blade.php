@@ -79,7 +79,7 @@
         <div class="content">
             <div class="logo">
                 <a href="http://braverhospitalityapp.com">
-                    <img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality">
+                    <img src="http://braverhospitalityapp.com/braver/storage/app/Images/bravernew.png" alt="Braver Hospitality">
                 </a>
             </div>
 

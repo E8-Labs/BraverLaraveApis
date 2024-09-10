@@ -25,7 +25,7 @@
         }
 
         .header {
-            background-color: #00C7B2;
+            background-color: #4ca2bc;
             padding: 20px;
             text-align: center;
         }
@@ -54,7 +54,7 @@
         }
 
         .btn-reset {
-            background-color: #00C7B2;
+            background-color: #4ca2bc;
             color: white;
             text-decoration: none;
             padding: 12px 24px;
@@ -91,7 +91,7 @@
 <div class="container">
     <div class="header">
         <a href="http://braverhospitalityapp.com">
-            <img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality">
+            <img src="http://braverhospitalityapp.com/braver/storage/app/Images/bravernew.png" alt="Braver Hospitality">
         </a>
     </div>
 
