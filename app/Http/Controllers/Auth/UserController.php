@@ -10,6 +10,7 @@ use App\Models\Auth\AccountStatus;
 use Illuminate\Support\Facades\Validator;
 use App\Models\NotificationTypes;
 use App\Models\User\Notification;
+use App\Models\Subscription;
 
 use App\Http\Resources\User\UserProfileFullResource;
 use App\Http\Resources\User\UserProfileLiteResource;
@@ -236,7 +237,7 @@ class UserController extends Controller
 					//subscribe user here.
 					$planData = $this->createNewSubscriptionOnApproval($user);
 					if($planData){
-						if($planData->status == "1"){
+						if($planData["status"] == "1"){
 							\Log::info("Plan successfully subscribed");
 							$user->accountstatus = AccountStatus::Approved;
 							$user->subscriptionSelected = NULL;
