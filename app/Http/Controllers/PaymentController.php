@@ -646,6 +646,10 @@ function upgradeSubscription(Request $request){
 	 	return FALSE;
 	 }
 
+
+
+	 
+
 	function createSubscription(Request $request){
 		$userid = $request->userid;
 		$plan = $request->plan;

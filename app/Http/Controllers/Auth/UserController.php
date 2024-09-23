@@ -134,6 +134,74 @@ class UserController extends Controller
 			}
     }
 
+
+	function createNewSubscriptionOnApproval($user){
+		if($user->stripecustomerid !== NULL){
+			// we can create subscription
+			$stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
+			$plan = $user->subscriptionSelected;
+
+
+
+				$code = null;
+				if($user->codeSelected != NULL && $user->codeSelected != ''){
+					$code = $user->codeSelected;
+				}
+				$params = [
+				  'customer' => $user->stripecustomerid,
+	  // 			"promotion_code" => "promo_1NqB0NC2y2Wr4BecXhZvEzeA",
+				  "trial_from_plan" => true, // change it to true to avail trial
+				  // "trial_period_days" => 7,
+				  'items' => [
+					['price' => $plan],
+				  ],
+				];
+				
+				if($code !== null){
+					\Log::info("Promo Code is ". $code);
+					// $params["promotion_code"] = $code; // old logic
+					$params["discounts"] = [
+						[ "coupon" =>  $code ]
+					];
+				}
+				// \Log::info("Creating subscription ", $params);
+				$sub = $stripe->subscriptions->create($params);
+			// 	\Log::info("Created subscription ", $sub);
+				if($sub->id === NULL){
+				// failed to create charge
+					return ['status' => "0",
+						'message'=> "Some error occurred creating charge",
+						'data' => $sub, 
+					];
+				}
+				else{
+				// subscription was created
+					$s = new Subscription;
+					$s->userid = $user->userid;
+					$s->plan = $plan;
+					$s->sub_id = $sub->id;
+					$s->sub_status = $sub->status;
+					$s->start_date = $sub->start_date . "";
+					$saved = $s->save();
+					if($saved){
+						return ['status' => "1",
+							'message'=> "Subscription was created",
+							'data' => $sub, 
+						];
+					}
+
+				}
+			
+		}
+		else{
+			// add a card
+			return ['status' => "0",
+					'message'=> "No payment method found",
+					'data' => NULL, 
+				];
+		}
+	}
+
     function approveUser(Request $request){
     	$validator = Validator::make($request->all(), [
 			'userid' => 'required',
@@ -159,8 +227,34 @@ class UserController extends Controller
 			try{
 				//ApprovedShowFlag
 				$user = User::where('userid', $request->userid)->first();
-			    $user->accountstatus = AccountStatus::Approved;
-			    $user->role = $request->role;
+			    
+
+				$planSelected = $user->subscriptionSelected;
+
+				$planData = NULL;
+				if($planSelected != NULL && $planSelected != ""){
+					//subscribe user here.
+					$planData = $this->createNewSubscriptionOnApproval($user);
+					if($planData){
+						if($planData->status == "1"){
+							\Log::info("Plan successfully subscribed");
+							$user->accountstatus = AccountStatus::Approved;
+							$user->subscriptionSelected = NULL;
+							$user->codeSelected = NULL;
+			    			$user->role = $request->role;
+						}
+						else{
+							\Log::info("Plan not subscribed " . $planData);
+						}
+					}
+					else{
+						\Log::info("Plan not subscribed  2 " . $planData);
+					}
+				}
+				
+
+				
+
 			    $saved = $user->save();
 				if($saved){
 					$admin = User::where('role', 'ADMIN')->first();

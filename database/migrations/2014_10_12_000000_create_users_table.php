@@ -39,6 +39,8 @@ return new class extends Migration
             $table->double('lang')->default(0);
             $table->string('city')->default("");
             $table->string('state')->default("");
+            $table->string('subscriptionSelected')->nullable(); //me, mp, ye, yp
+            $table->string('codeSelected')->nullable(); 
         });
     }
 

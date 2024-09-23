@@ -679,6 +679,12 @@ class UserAuthController extends Controller
         	    
         	}
 	
+			if($request->has("subscription_plan")){
+				$user->subscriptionSelected = $request->subscription_plan;
+			}
+			if($request->has("promo_code")){
+				$user->codeSelected = $request->promo_code;
+			}
         	if($request->has('fcm_token')){
         	    $fcm_token = $request->fcm_token;
         	    $user->fcmtoken = $fcm_token;
