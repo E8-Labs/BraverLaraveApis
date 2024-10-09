@@ -98,6 +98,20 @@ class UserProfileFullResource extends JsonResource
         if($haveActiveSubs){
             $isPremium = TRUE;
         }
+
+
+        //Check if we will show user the payment window or not on the app for the first time users who haven't added payment  and probably not approved
+        $data = $stripe->customers->allSources(
+            $this->stripecustomerid,
+            ['object' => 'card', 'limit' => 2]
+            );
+
+			// return $data;
+			$cards = $data->data;
+            $showPaywall = false;
+            if(count($cards) > 0 && $this->subscriptionSelected != NULL && $this->codeSelected != NULL){
+                $showPaywall = true;
+            }
         return [
             "userid"=> $this->userid,
             "name"=> $this->name,
@@ -118,7 +132,8 @@ class UserProfileFullResource extends JsonResource
             'state' => $this->state,
             "is_premium" => $isPremium,
             "plan" => $mySubscription,
-            "sub" => $sub
+            "sub" => $sub,
+            "shouldShowPaywall"=> $showPaywall,
         ];
     }
 }

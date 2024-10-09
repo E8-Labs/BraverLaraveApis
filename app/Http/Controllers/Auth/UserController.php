@@ -240,8 +240,8 @@ class UserController extends Controller
 						if($planData["status"] == "1"){
 							\Log::info("Plan successfully subscribed");
 							$user->accountstatus = AccountStatus::Approved;
-							$user->subscriptionSelected = NULL;
-							$user->codeSelected = NULL;
+							// $user->subscriptionSelected = NULL; // don't set these 2 null as we will determine from this whether a user completed it or not
+							// $user->codeSelected = NULL;
 			    			$user->role = $request->role;
 						}
 						else{
