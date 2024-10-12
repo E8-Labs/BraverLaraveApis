@@ -31,13 +31,13 @@
         }
 
         .header img {
-            width: 160px;
+            width: 240px;
             height: auto;
         }
 
         .header p {
             margin: 10px 0 0;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
