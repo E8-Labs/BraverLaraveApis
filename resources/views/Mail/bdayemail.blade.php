@@ -31,14 +31,14 @@
         }
 
         .header img {
-            width: 80px;
+            width: 160px;
             height: auto;
         }
 
         .header p {
             margin: 10px 0 0;
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 13px;
+            font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #14A5BF;
