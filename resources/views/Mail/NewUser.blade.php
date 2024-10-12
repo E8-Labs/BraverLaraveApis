@@ -25,14 +25,24 @@
         }
 
         .header {
+            background-color: #000000;
             padding: 20px;
             text-align: center;
-            background-color: #D1D4D3;
+            color: #ffffff;
         }
 
         .header img {
-            width: 90px;
+            width: 80px;
             height: auto;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #14A5BF;
         }
 
         .content {

@@ -25,14 +25,24 @@
         }
 
         .header {
-            background-color: #4ca2bc;
+            background-color: #000000;
             padding: 20px;
             text-align: center;
+            color: #ffffff;
         }
 
         .header img {
             width: 80px;
             height: auto;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #14A5BF;
         }
 
         .content {
@@ -89,10 +99,11 @@
 <body>
 
 <div class="container">
-    <div class="header">
+<div class="header">
         <a href="http://braverhospitalityapp.com">
-            <img src="http://braverhospitalityapp.com/braver/storage/app/Images/bravernew.png" alt="Braver Hospitality">
+            <img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality">
         </a>
+        <p>Elevate every experience</p>
     </div>
 
     <div class="content">

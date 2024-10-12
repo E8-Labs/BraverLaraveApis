@@ -24,14 +24,24 @@
         }
 
         .header {
-            background-color: #f0f0f0;
+            background-color: #000000;
             padding: 20px;
             text-align: center;
+            color: #ffffff;
         }
 
         .header img {
             width: 80px;
             height: auto;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #14A5BF;
         }
 
         .content {
@@ -90,11 +100,12 @@
         <a href="http://braverhospitalityapp.com">
             <img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality">
         </a>
+        <p>Elevate every experience</p>
     </div>
 
     <div class="content">
-        <p>Hey <strong>{{$user_name}}</strong>,</p>
-        <p>Just a quick reminder that your birthday is coming up on <strong>{{$time}}</strong>! Here are your details:</p>
+        <p>Hey <strong>Admin</strong>,</p>
+        <p>Just a quick reminder that {{$user_name}}'s birthday is coming up on <strong>{{$time}}</strong>! Here are his contact details:</p>
 
         <table class="info-table">
             <tr>

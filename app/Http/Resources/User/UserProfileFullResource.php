@@ -109,7 +109,7 @@ class UserProfileFullResource extends JsonResource
 			// return $data;
 			$cards = $data->data;
             $showPaywall = false;
-            if(count($cards) > 0 && $this->subscriptionSelected != NULL && $this->codeSelected != NULL){
+            if(count($cards) == 0 && $this->subscriptionSelected == NULL && $this->codeSelected == NULL){
                 $showPaywall = true;
             }
         return [
@@ -134,6 +134,7 @@ class UserProfileFullResource extends JsonResource
             "plan" => $mySubscription,
             "sub" => $sub,
             "shouldShowPaywall"=> $showPaywall,
+            "cards" => $cards
         ];
     }
 }
