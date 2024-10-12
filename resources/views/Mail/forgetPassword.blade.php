@@ -64,18 +64,21 @@
         }
 
         .btn-reset {
-            background-color: #4ca2bc;
-            color: white;
+            background-color: #ffffff; /* Button background set to white */
+            color: #333333; /* Button text color set to dark */
             text-decoration: none;
             padding: 12px 24px;
             border-radius: 4px;
             display: inline-block;
             font-size: 16px;
             font-weight: bold;
+            border: 2px solid #333333; /* Add border for definition */
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .btn-reset:hover {
-            background-color: #00a590;
+            background-color: #333333; /* Change background on hover */
+            color: #ffffff; /* Invert text color on hover */
         }
 
         .footer {
@@ -99,7 +102,7 @@
 <body>
 
 <div class="container">
-<div class="header">
+    <div class="header">
         <a href="http://braverhospitalityapp.com">
             <img src="http://braverhospitalityapp.com/braver/storage/app/Images/braverlogo.png" alt="Braver Hospitality">
         </a>
