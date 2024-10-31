@@ -174,6 +174,9 @@ class PaymentController extends Controller
 			"stripecardid" => 'required',
 				]);
 
+				$cardid = $request->stripecardid;
+				$customerid = $request->customerid;
+
 			if($validator->fails()){
 				return response()->json(['status' => "0",
 					'message'=> 'validation error',
@@ -189,6 +192,7 @@ class PaymentController extends Controller
 				]);
 			}
 
+			
 			$stripe = new \Stripe\StripeClient( env('Stripe_Secret'));
         	$sub = $stripe->customers->deleteSource(
             	$customerid,
