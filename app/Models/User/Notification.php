@@ -72,9 +72,13 @@ public static function add(int $notification_type, string $from_user, string $to
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmNotification));
             $result = curl_exec($ch);
             curl_close($ch);
+            \Log::info("Sending push result");
+            \Log::info($result);
             return true;
 
         }catch(\Illuminate\Database\QueryException $ex){
+            \Log::info("Exception sending push ");
+            \Log::info($ex);
             return false;
         }
     }

@@ -39,7 +39,7 @@ class PaymentController extends Controller
 			"expirydate" => 'required',
 			"source" => 'required',
 			"cvc" => 'required',
-				]);
+			]);
 
 			if($validator->fails()){
 				return response()->json(['status' => "0",
@@ -161,6 +161,14 @@ class PaymentController extends Controller
 						'data' => null, 
 					]);
 			} 
+			catch (\Exception $e) {
+				$errorMessage = $e->getError()->message;
+				  return response()->json(['status' => "0",
+						 'message'=> 'Card not created '. $errorMessage,
+						 'data' => null, 
+						 "error" => $e
+					 ]);
+			 } 
 
 
 
