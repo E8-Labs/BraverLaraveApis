@@ -39,7 +39,8 @@ public static function add(int $notification_type, string $from_user, string $to
                 'notifiable_type'   => $notifiable_type,
                 'message'           => $message,
             ]);
-            self::sendFirebasePushNotification($notification);
+            // self::sendFirebasePushNotification($notification);
+            self::Push_Notification($notification);
             return $notification;
         }
         catch(\Exception $e){
@@ -49,48 +50,126 @@ public static function add(int $notification_type, string $from_user, string $to
         }
     }
 
-    public function Push_Notification($token,$data) {
-        try{
+    //Firebase New HTTP v1 api
+    public static function Push_Notification($notification) {
+        $sendToUser = User::where('userid', $notification->to_user)->first();
 
-            $API_KEY_FCM = "AAAAH8FOIuk:APA91bH4ZOKCMWE3iQa3qDvvrx4FC5nt3YJhCzKePhThvK1mFt1nTM7_V-F232Um3WQSUOXQ_itNRkLWgV2Kz537arfGWttjWszmXMvO-400MPhs2oZGcWhTrEokm6u__a99VoNwW80s";
-
-            $fcmUrl = 'https://fcm.googleapis.com/fcm/send';
-            
-            $extraNotificationData = ["message" => $data];
-    
-            $fcmNotification = [
-                //'registration_ids' => $tokenList, //multple token array
-                'to'        => $token, //single token
-                'notification' => $data,
-                'data' => $extraNotificationData
+    if (isset($sendToUser->fcmtoken) && $sendToUser->fcmtoken) {
+        try {
+            // Define Firebase credentials
+            $firebaseCredentials = [
+                'type' => 'service_account',
+                'project_id' => env('FIREBASE_PROJECT_ID'),
+                'private_key_id' => env('FIREBASE_PRIVATE_KEY_ID'),
+                'private_key' => env('FIREBASE_PRIVATE_KEY'),
+                'client_email' => env('FIREBASE_CLIENT_EMAIL'),
+                'client_id' => env('FIREBASE_CLIENT_ID'),
+                "auth_uri"=> "https://accounts.google.com/o/oauth2/auth",
+                "token_uri"=> "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url"=> "https://www.googleapis.com/oauth2/v1/certs",
+                "client_x509_cert_url"=> "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-ccq3e%40proper-9d82d.iam.gserviceaccount.com",
+                "universe_domain"=> "googleapis.com"
             ];
-            //var_dump($fcmNotification); exit;
-    
+
+            // Get the OAuth2 token
+            $accessToken = self::getFirebaseAccessTokenFromCredentials($firebaseCredentials);
+
+            // Prepare the payload
+            $data = [
+                "message" => [
+                    "token" => $sendToUser->fcmtoken,
+                    "notification" => [
+                        "title" => $notification->getTitleAttribute(),
+                        "body" => $notification->getSubtitleAttribute(),
+                        'data' => $notification,
+                    ],
+                    'data' => $notification,
+                ]
+            ];
+
+            // Prepare the headers
             $headers = [
-                'Authorization: key='. $API_KEY_FCM,
-                'Content-Type: application/json'
+                'Authorization: Bearer ' . $accessToken,
+                'Content-Type: application/json',
             ];
-    
-    
+
+            // Send the notification
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL,$fcmUrl);
+
+            curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/v1/projects/your-project-id/messages:send');
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmNotification));
-            $result = curl_exec($ch);
-            curl_close($ch);
-            \Log::info("Sending push result");
-            \Log::info($result);
-            return true;
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 
-        }catch(\Illuminate\Database\QueryException $ex){
-            \Log::info("Exception sending push ");
-            \Log::info($ex);
-            return false;
+            $result = curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                \Log::error('Curl error: ' . curl_error($ch));
+            }
+
+            curl_close($ch);
+
+            \Log::info("Push notification sent successfully. Result: " . $result);
+
+            return $result;
+        } catch (\Exception $e) {
+            \Log::error("Push notification failed: " . $e->getMessage());
         }
     }
+    }
+
+    /**
+ * Get OAuth2 Token for Firebase HTTP v1 API from credentials array.
+ */
+private static function getFirebaseAccessTokenFromCredentials($credentials)
+{
+    $now = time();
+    $token = [
+        "iss" => $credentials['client_email'],
+        "sub" => $credentials['client_email'],
+        "aud" => "https://oauth2.googleapis.com/token",
+        "iat" => $now,
+        "exp" => $now + 3600,
+        "scope" => "https://www.googleapis.com/auth/firebase.messaging"
+    ];
+
+    $jwt = self::generateJWT($token, $credentials['private_key']);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://oauth2.googleapis.com/token');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        'assertion' => $jwt,
+    ]));
+
+    $response = json_decode(curl_exec($ch), true);
+    curl_close($ch);
+
+    return $response['access_token'] ?? null;
+}
+
+/**
+ * Generate JWT for Firebase.
+ */
+private static function generateJWT($payload, $privateKey)
+{
+    $header = [
+        "alg" => "RS256",
+        "typ" => "JWT"
+    ];
+
+    $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(json_encode($header)));
+    $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(json_encode($payload)));
+    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $privateKey, true);
+    $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+
+    return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+}
 
 
     public static function sendFirebasePushNotification(Notification $notification)
