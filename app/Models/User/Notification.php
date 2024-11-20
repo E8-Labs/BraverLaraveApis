@@ -47,7 +47,12 @@ public static function add(int $notification_type, string $from_user, string $to
             ]);
             // self::sendFirebasePushNotification($notification);
             // self::Push_Notification($notification);
-            $result = $this->sendPushNotification($toToken, $title, $body);
+            $sendToUser = User::where('userid', $notification->to_user)->first();
+            if (isset($sendToUser->fcmtoken) && $sendToUser->fcmtoken) {
+                
+                $result = Controller::sendFirebasePushNotification($sendToUser->fcmtoken, $notification->getTitleAttribute(),  $notification->getSubtitleAttribute());
+            }
+            
 
             if ($result) {
                 \Log::info('Push notification sent successfully.');
