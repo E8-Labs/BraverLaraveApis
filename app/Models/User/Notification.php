@@ -10,6 +10,12 @@ use App\Models\Listing\Reservation;
 use App\Models\Listing\ReservationStatus;
 
 use App\Models\Listing;
+use App\Http\Controllers\Controller;
+
+
+
+
+
 class Notification extends Model
 {
     use HasFactory;
@@ -40,7 +46,16 @@ public static function add(int $notification_type, string $from_user, string $to
                 'message'           => $message,
             ]);
             // self::sendFirebasePushNotification($notification);
-            self::Push_Notification($notification);
+            // self::Push_Notification($notification);
+            $result = $this->sendPushNotification($toToken, $title, $body);
+
+            if ($result) {
+                \Log::info('Push notification sent successfully.');
+                
+            } else {
+                \Log::error('Failed to send push notification.');
+            }
+            \Log::info($result);
             return $notification;
         }
         catch(\Exception $e){
@@ -150,8 +165,11 @@ private static function getFirebaseAccessTokenFromCredentials($credentials)
     $response = json_decode(curl_exec($ch), true);
     curl_close($ch);
 
+    \Log::info("Access Token Response: " . json_encode($response));
+
     return $response['access_token'] ?? null;
 }
+
 
 /**
  * Generate JWT for Firebase.

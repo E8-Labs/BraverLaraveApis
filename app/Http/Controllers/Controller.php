@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use app\Models\Auth\User;
 
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -81,6 +85,48 @@ class Controller extends BaseController
             return false;
         }
     }
+
+    public static function sendFirebasePushNotification($toToken, $title, $body)
+{
+    try {
+        // Initialize Firebase Messaging
+        $firebaseCredentials = [
+          'type' => 'service_account',
+          'project_id' => env('FIREBASE_PROJECT_ID'),
+          'private_key_id' => env('FIREBASE_PRIVATE_KEY_ID'),
+          'private_key' => env('FIREBASE_PRIVATE_KEY'),
+          'client_email' => env('FIREBASE_CLIENT_EMAIL'),
+          'client_id' => env('FIREBASE_CLIENT_ID'),
+          "auth_uri"=> "https://accounts.google.com/o/oauth2/auth",
+          "token_uri"=> "https://oauth2.googleapis.com/token",
+          "auth_provider_x509_cert_url"=> "https://www.googleapis.com/oauth2/v1/certs",
+          "client_x509_cert_url"=> "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-ccq3e%40proper-9d82d.iam.gserviceaccount.com",
+          "universe_domain"=> "googleapis.com"
+      ];
+        $factory = (new Factory)->withServiceAccount($firebaseCredentials);
+      $messaging = $factory->createMessaging();
+
+        // Create the notification
+        $notification = Notification::create($title, $body);
+
+        // Create the Cloud Message
+        $message = CloudMessage::withTarget('token', $toToken)
+            ->withNotification($notification)
+            ->withData([
+                'customKey' => 'customValue' // Add any custom data here
+            ]);
+
+        // Send the message
+        $result = $messaging->send($message);
+
+        \Log::info('Push notification sent successfully: ' . json_encode($result));
+
+        return $result;
+    } catch (\Exception $e) {
+        \Log::error('Error sending push notification: ' . $e->getMessage());
+        return null;
+    }
+}
 
     public function createCheckrCandidate($data){
         $data["copy_requested"] = true;
