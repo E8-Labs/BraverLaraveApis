@@ -19,7 +19,8 @@ class Notification extends Model
 
 public static function add(int $notification_type, string $from_user, string $to_user = NULL, $notification_for = null, string $message = null)
     {
-        \Log::info("Adding Notification ", $notification_type);
+        \Log::info("Adding Notification ");
+        \Log::info($notification_type);
         $notifiable_type = null;
         $notifiable_id   = null;
 
@@ -42,7 +43,8 @@ public static function add(int $notification_type, string $from_user, string $to
             return $notification;
         }
         catch(\Exception $e){
-            \Log::info("Exception ", $e);
+            \Log::info("Exception ");
+            \Log::info($e);
             return null;
         }
     }
