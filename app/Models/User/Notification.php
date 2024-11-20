@@ -19,6 +19,7 @@ class Notification extends Model
 
 public static function add(int $notification_type, string $from_user, string $to_user = NULL, $notification_for = null, string $message = null)
     {
+        \Log::info("Adding Notification ", $notification_type);
         $notifiable_type = null;
         $notifiable_id   = null;
 
@@ -28,16 +29,22 @@ public static function add(int $notification_type, string $from_user, string $to
             $notifiable_id    = $notification_for->$primary_key;
         }
 
-        $notification = self::create([
-            'notification_type' => $notification_type,
-            'from_user'         => $from_user,
-            'to_user'           => $to_user,
-            'notifiable_id'     => $notifiable_id,
-            'notifiable_type'   => $notifiable_type,
-            'message'           => $message,
-        ]);
-        self::sendFirebasePushNotification($notification);
-        return $notification;
+        try{
+            $notification = self::create([
+                'notification_type' => $notification_type,
+                'from_user'         => $from_user,
+                'to_user'           => $to_user,
+                'notifiable_id'     => $notifiable_id,
+                'notifiable_type'   => $notifiable_type,
+                'message'           => $message,
+            ]);
+            self::sendFirebasePushNotification($notification);
+            return $notification;
+        }
+        catch(\Exception $e){
+            \Log::info("Exception ", $e);
+            return null;
+        }
     }
 
     public function Push_Notification($token,$data) {
@@ -91,6 +98,7 @@ public static function add(int $notification_type, string $from_user, string $to
         $sendToUser = User::where('userid', $notification->to_user)->first();
         if (isset($sendToUser->fcmtoken) && $sendToUser->fcmtoken)
         {
+            \Log::info("Sending push to ". $sendToUser->fcmtoken);
             $SERVER_API_KEY = env('FCM_SERVER_API_KEY');
             // $message = $notification->getMessageAttribute();
             $data = [
@@ -107,6 +115,7 @@ public static function add(int $notification_type, string $from_user, string $to
                 'Authorization: key=' . $API_KEY_FCM,
                 'Content-Type: application/json',
             ];
+            
 
             $ch = curl_init();
 
@@ -116,8 +125,10 @@ public static function add(int $notification_type, string $from_user, string $to
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);
-
-            return curl_exec($ch);
+            $result = curl_exec($ch);
+            \Log::info("Sending push result");
+            \Log::info($result);
+            return $result;
         }
         return null;
     }

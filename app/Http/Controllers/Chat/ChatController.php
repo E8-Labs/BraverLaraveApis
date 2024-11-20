@@ -251,6 +251,10 @@ class ChatController extends Controller
                 	$data["sound"] = "default";
                 	$data["chatid"] = $chat->chatid;
                 	// $this->Push_Notification($token, $data);
+					\Log::info("Sending reservation notification " );
+					\Log::info($request->fromuser);
+					\Log::info($admin->userid);
+					\Log::info($res);
 					Notification::add(NotificationTypes::TypeReservation, $request->fromuser, $admin->userid, $res);
 
 					$yacht = Listing::where('yachtid', $yachtid)->first();
