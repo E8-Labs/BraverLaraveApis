@@ -46,6 +46,8 @@ class NotificationController extends Controller
 			// $not->notifiable_type = $not;
 			$saved = $not->save();
 			if($saved){
+				$topic = "Braver_Mass_Notification";
+				$result = self::sendFirebaseTopicNotification($topic, "Notificaiton", $request->subtitle);
 				return response()->json(['status' => "1",
 					'message'=> 'Notification Saved',
 					'data' => $not, 
