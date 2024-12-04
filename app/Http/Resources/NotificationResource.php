@@ -25,7 +25,8 @@ class NotificationResource extends JsonResource
         else if($this->notification_type == NotificationTypes::InvoicePaid){
             $icon = \Config::get('constants.invoice_ic');
         }
-        else if($this->notification_type == NotificationTypes::NewUser){
+        else if($this->notification_type == NotificationTypes::NewUser || 
+                $this->notification_type == NotificationTypes::AccountApproved){
             $icon = \Config::get('constants.new_user_ic');
         }
         else if($this->notification_type == NotificationTypes::AdminBroadcast){
