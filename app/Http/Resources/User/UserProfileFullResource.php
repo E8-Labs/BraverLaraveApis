@@ -128,8 +128,8 @@ class UserProfileFullResource extends JsonResource
         }
         }
         catch(\Exception $e){
-            Log::info("Exception in UserProfileFullRessource");
-            Log::info($e);
+            \Log::info("Exception in UserProfileFullRessource");
+            \Log::info($e);
         }
 
         $showPaywall = false;
@@ -143,8 +143,8 @@ class UserProfileFullResource extends JsonResource
             $showPaywall = count($cards) == 0 && $this->subscriptionSelected == null && $this->codeSelected == null;
         }
         catch(\Exception $e){
-            Log::info("Exception in UserProfileFullRessource Paywall");
-            Log::info($e);
+            \Log::info("Exception in UserProfileFullRessource Paywall");
+            \Log::info($e);
         }
         
 
