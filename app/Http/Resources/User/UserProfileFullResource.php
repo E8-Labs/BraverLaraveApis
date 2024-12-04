@@ -26,11 +26,14 @@ class UserProfileFullResource extends JsonResource
         // Initialize variables
         $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
         $paymentController = new PaymentController();
-        $haveActiveSubs = $paymentController->getUserActiveSubscriptions($this->stripecustomerid);
-
-        $plans = $haveActiveSubs ?? []; // Ensure $plans is an array
+        
         $sub = null;
-        $mySubscription = ["status" => "inactive", "plan" => ""];
+        $isPremium = false;
+        try{
+            $haveActiveSubs = $paymentController->getUserActiveSubscriptions($this->stripecustomerid);
+            $isPremium = !empty($haveActiveSubs);
+        $plans = $haveActiveSubs ?? []; // Ensure $plans is an array
+            $mySubscription = ["status" => "inactive", "plan" => ""];
 
         if (count($plans) > 0) {
             $sub = $plans[0];
@@ -123,17 +126,30 @@ class UserProfileFullResource extends JsonResource
                 "net_amount" => $netTotal
             ];
         }
+        }
+        catch(\Exception $e){
+            Log::info("Exception in UserProfileFullRessource");
+            Log::info($e);
+        }
 
-        $isPremium = !empty($haveActiveSubs);
+        $showPaywall = false;
+        try{
+            $data = $stripe->customers->allSources(
+                $this->stripecustomerid,
+                ['object' => 'card', 'limit' => 2]
+            );
+    
+            $cards = $data->data ?? [];
+            $showPaywall = count($cards) == 0 && $this->subscriptionSelected == null && $this->codeSelected == null;
+        }
+        catch(\Exception $e){
+            Log::info("Exception in UserProfileFullRessource Paywall");
+            Log::info($e);
+        }
+        
 
         // Retrieve customer cards
-        $data = $stripe->customers->allSources(
-            $this->stripecustomerid,
-            ['object' => 'card', 'limit' => 2]
-        );
-
-        $cards = $data->data ?? [];
-        $showPaywall = count($cards) == 0 && $this->subscriptionSelected == null && $this->codeSelected == null;
+        
 
         return [
             "userid" => $this->userid,
