@@ -26,130 +26,145 @@ class UserProfileFullResource extends JsonResource
         // Initialize variables
         $stripe = new \Stripe\StripeClient(env('Stripe_Secret'));
         $paymentController = new PaymentController();
-        
+
         $sub = null;
         $isPremium = false;
-        try{
+        $paymentMessage = null;
+        $showPaymentMessage = false;
+        $mySubscription = ["status" => "inactive", "plan" => ""];
+
+        try {
+            // Fetch active subscriptions
             $haveActiveSubs = $paymentController->getUserActiveSubscriptions($this->stripecustomerid);
             $isPremium = !empty($haveActiveSubs);
-        $plans = $haveActiveSubs ?? []; // Ensure $plans is an array
-            $mySubscription = ["status" => "inactive", "plan" => ""];
+            $plans = $haveActiveSubs ?? []; // Ensure $plans is an array
 
-        if (count($plans) > 0) {
-            $sub = $plans[0];
-            $isTrial = $paymentController->checkIfTrial($sub);
+            if (count($plans) > 0) {
+                $sub = $plans[0];
+                $isTrial = $paymentController->checkIfTrial($sub);
 
-            $price = optional($sub->plan)->id;
-            $type = "";
-            $interval = "";
-            $amount = 1000; // Default amount
-            $netTotal = $amount;
+                $price = optional($sub->plan)->id;
+                $type = "";
+                $interval = "";
+                $amount = optional($sub->plan)->amount / 100 ?? 0;
+                $netTotal = $amount;
 
-            // Initialize variables for coupon details
-            $name = null;
-            $percentage_off = null;
-            $amount_off = null;
-            $duration = null;
-            $duration_in_months = null;
-            $coupon_id = null;
-
-            if ($sub && $sub->plan) {
-                $interval = optional($sub->plan)->interval . "ly";
-                $amount = optional($sub->plan)->amount / 100;
-
-                // Check if discount exists
+                // Handle discount/coupons
                 $discount = $sub->discount ?? null;
-                $off = 0;
-
                 if ($discount && isset($discount->coupon)) {
                     $coupon = $discount->coupon;
-
-                    // Get amount_off or percent_off
                     $amount_off = $coupon->amount_off ?? null;
                     $percentage_off = $coupon->percent_off ?? null;
+                    $off = $amount_off ? $amount_off / 100 : ($amount * $percentage_off / 100);
+                    $netTotal = $amount - $off;
+                }
 
-                    if ($amount_off !== null) {
-                        $off = $amount_off / 100; // Convert amount_off from cents to dollars
-                    } elseif ($percentage_off !== null) {
-                        $off = ($amount * $percentage_off) / 100;
+                // Determine plan type
+                switch ($price) {
+                    case "price_1PqqchC2y2Wr4BecnrBic37s":
+                        $type = "Monthly Private";
+                        break;
+                    case "price_1PqqerC2y2Wr4BecRTvEsD1u":
+                        $type = "Monthly Executive";
+                        break;
+                    case "price_1PqqiXC2y2Wr4BecgL2a3LmO":
+                        $type = "Yearly Private";
+                        break;
+                    case "price_1Pqqj4C2y2Wr4BecXvK55VpD":
+                        $type = "Yearly Executive";
+                        break;
+                    default:
+                        $type = "Unknown Plan";
+                        break;
+                }
+
+                // Check for payment issues
+                $latestInvoice = optional($sub)->latest_invoice;
+                if ($latestInvoice) {
+                    $invoiceDetails = $stripe->invoices->retrieve($latestInvoice, []);
+                    $paymentIntent = $invoiceDetails->payment_intent ? $stripe->paymentIntents->retrieve($invoiceDetails->payment_intent, []) : null;
+
+                    if ($paymentIntent && $paymentIntent->status === 'requires_payment_method') {
+                        $paymentMessage = "Your payment method failed. Please update your payment method to continue your subscription.";
+                        $showPaymentMessage = true;
+                    }
+                }
+
+                $status = $isTrial ? 'trialing' : $sub->status;
+
+                $mySubscription = [
+                    "status" => $status,
+                    "plan" => $type,
+                    "price_id" => $price,
+                    "amount" => $amount,
+                    "interval" => $interval,
+                    "net_amount" => $netTotal,
+                    "show_payment_message" => $showPaymentMessage,
+                    "payment_message" => $paymentMessage,
+                ];
+            } else {
+                // Fetch the most recent canceled/expired subscription
+                $subscriptions = $stripe->subscriptions->all([
+                    'customer' => $this->stripecustomerid,
+                    'status' => 'all',
+                    'limit' => 5, // Fetch up to 5 recent subscriptions
+                ]);
+
+                // Filter subscriptions to include only those that are not active or trialing
+                $filteredSubscriptions = array_filter($subscriptions->data, function ($sub) {
+                    return !in_array($sub->status, ['active', 'trialing']);
+                });
+
+                // Get the most recent canceled subscription if any
+                $sub = !empty($filteredSubscriptions) ? reset($filteredSubscriptions) : null;
+
+                if ($sub) {
+                    $type = optional($sub->plan)->nickname ?? "Unknown Plan";
+                    $amount = optional($sub->plan)->amount / 100 ?? 0;
+                    $interval = optional($sub->plan)->interval . "ly" ?? "Unknown Interval";
+
+                    // Check for payment-related cancellation
+                    $cancellationReason = optional($sub->cancellation_details)->reason;
+                    if ($cancellationReason === 'payment_failed' || $sub->status === "incomplete_expired") {
+                        $paymentMessage = "Your payment method failed. Please update your payment method to renew your subscription.";
+                        $showPaymentMessage = true;
+                    }
+                    if ($sub->status === "incomplete") {
+                        $paymentMessage = "Your payment method failed. We will try again. If the payment method is not active or has insufficient funds, please update the payment method so that subscription can be processed.";
+                        $showPaymentMessage = true;
                     }
 
-                    // Update net total
-                    $netTotal = $amount - $off;
-
-                    // Get coupon details
-                    $name = $coupon->name ?? null;
-                    $duration = $coupon->duration ?? null;
-                    $duration_in_months = $coupon->duration_in_months ?? null;
-                    $coupon_id = $coupon->id ?? null;
-                } else {
-                    // No discount or coupon
-                    $netTotal = $amount;
+                    $mySubscription = [
+                        "status" => $sub->status ?? "canceled",
+                        "plan" => $type,
+                        "price_id" => optional($sub->plan)->id ?? null,
+                        "amount" => $amount,
+                        "interval" => $interval,
+                        "cancellation_reason" => $cancellationReason ?? "Unknown",
+                        "cancellation_message" => $paymentMessage ?? "Your subscription was canceled. Contact support if you wish to renew.",
+                        "show_payment_message" => $showPaymentMessage,
+                        "payment_message" => $paymentMessage,
+                    ];
                 }
             }
-
-            // Determine plan type based on price ID
-            switch ($price) {
-                case "price_1PqqchC2y2Wr4BecnrBic37s":
-                    $type = "Monthly Private";
-                    break;
-                case "price_1PqqerC2y2Wr4BecRTvEsD1u":
-                    $type = "Monthly Executive";
-                    break;
-                case "price_1PqqiXC2y2Wr4BecgL2a3LmO":
-                    $type = "Yearly Private";
-                    break;
-                case "price_1Pqqj4C2y2Wr4BecXvK55VpD":
-                    $type = "Yearly Executive";
-                    break;
-                default:
-                    $type = "Unknown Plan";
-                    break;
-            }
-
-            // Set subscription status
-            $subscriptionStatus = optional($sub)->status ?? 'inactive';
-            $status = $isTrial ? 'trialing' : $subscriptionStatus;
-
-            $mySubscription = [
-                "status" => $status,
-                "plan" => $type,
-                "price_id" => $price,
-                "amount" => $amount,
-                "interval" => $interval,
-                "coupon_name" => $name,
-                "coupon_id" => $coupon_id,
-                "percent_off" => $percentage_off,
-                "amount_off" => $amount_off,
-                "duration" => $duration,
-                "duration_in_months" => $duration_in_months,
-                "net_amount" => $netTotal
-            ];
-        }
-        }
-        catch(\Exception $e){
-            \Log::info("Exception in UserProfileFullRessource");
+        } catch (\Exception $e) {
+            \Log::info("Exception in UserProfileFullResource");
             \Log::info($e);
         }
 
         $showPaywall = false;
-        try{
+        try {
+            // Fetch customer payment sources
             $data = $stripe->customers->allSources(
                 $this->stripecustomerid,
                 ['object' => 'card', 'limit' => 2]
             );
-    
             $cards = $data->data ?? [];
             $showPaywall = count($cards) == 0 && $this->subscriptionSelected == null && $this->codeSelected == null;
-        }
-        catch(\Exception $e){
-            \Log::info("Exception in UserProfileFullRessource Paywall");
+        } catch (\Exception $e) {
+            \Log::info("Exception in UserProfileFullResource Paywall");
             \Log::info($e);
         }
-        
-
-        // Retrieve customer cards
-        
 
         return [
             "userid" => $this->userid,
@@ -173,7 +188,6 @@ class UserProfileFullResource extends JsonResource
             "plan" => $mySubscription,
             "sub" => $sub,
             "shouldShowPaywall" => $showPaywall,
-            // "cards" => $cards
         ];
     }
 }
